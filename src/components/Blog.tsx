@@ -5,6 +5,7 @@ import { GradientButton } from './GradientButton';
 export function Blog() {
   const blogPosts = [
     {
+      id: '1',
       image: 'https://images.unsplash.com/photo-1762330463863-a6a399beb5ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0ZWNobm9sb2d5JTIwYmxvZyUyMGFydGljbGV8ZW58MXx8fHwxNzY0MTUwMjg0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
       title: 'The Future of AI in Web Development',
       excerpt: 'Explore how artificial intelligence is revolutionizing the way we build and interact with websites, bringing unprecedented capabilities to modern web applications.',
@@ -14,6 +15,7 @@ export function Blog() {
       category: 'AI Technology'
     },
     {
+      id: '2',
       image: 'https://images.unsplash.com/photo-1757310998437-b2e8a7bd2e97?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGF0Ym90JTIwaW50ZXJmYWNlfGVufDF8fHx8MTc2NDE0MTgxN3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
       title: 'Building Custom Chatbots: A Complete Guide',
       excerpt: 'Learn the essential steps and best practices for creating intelligent chatbots that transform customer engagement and revolutionize business support systems.',
@@ -23,6 +25,7 @@ export function Blog() {
       category: 'Chatbots'
     },
     {
+      id: '3',
       image: 'https://images.unsplash.com/photo-1557324232-b8917d3c3dcb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3ZWIlMjBkZXZlbG9wbWVudCUyMGNvZGluZ3xlbnwxfHx8fDE3NjQwNzg5MDd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
       title: 'Top AI Automation Tools for 2025',
       excerpt: 'Discover the latest AI automation tools that can streamline your business operations and boost productivity to unprecedented heights in the digital age.',
@@ -30,6 +33,16 @@ export function Blog() {
       author: 'Emily Rodriguez',
       readTime: '6 min read',
       category: 'Automation'
+    },
+    {
+      id: '4',
+      image: 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080',
+      title: 'Machine Learning in Production',
+      excerpt: 'Learn the essential practices and challenges of deploying machine learning models at scale in real-world production environments.',
+      date: 'Nov 10, 2025',
+      author: 'David Park',
+      readTime: '12 min read',
+      category: 'Industry Insights'
     }
   ];
 
@@ -63,7 +76,7 @@ export function Blog() {
                 <div className="relative h-56 overflow-hidden">
                   <ImageWithFallback
                     src={post.image}
-                    alt={post.title + post.author + post.category + post.excerpt}
+                    alt={post.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#232323] via-[#232323]/50 to-transparent opacity-60"></div>
@@ -77,33 +90,24 @@ export function Blog() {
                 </div>
 
                 <div className="p-6 space-y-4 flex-grow flex flex-col">
-                  <div className="flex items-center gap-4 text-[#efe9d6]/60 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-[#c9a227]" />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-[#efe9d6]/60 text-sm">
                       <span>{post.author}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-[#c9a227]" />
+                      <span>•</span>
                       <span>{post.date}</span>
                     </div>
-                  </div>
-
-                  <h3 className="text-[#efe9d6] group-hover:text-[#c9a227] transition-colors duration-300 leading-tight">
-                    {post.title}
-                  </h3>
-
-                  <p className="text-[#efe9d6]/70 text-sm leading-relaxed flex-grow">{post.excerpt}</p>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-[#c9a227]/10">
-                    <div className="flex items-center gap-1.5 text-[#efe9d6]/60 text-xs">
-                      <Clock className="w-3.5 h-3.5 text-[#c9a227]" />
-                      <span>{post.readTime}</span>
-                    </div>
-
-                    <button className="inline-flex items-center gap-2 text-[#c9a227] group-hover:gap-3 transition-all duration-300 text-sm">
-                      <span>READ MORE</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
+                    <h3 className="text-[#efe9d6] group-hover:text-[#c9a227] transition-colors duration-300">
+                      {post.title}
+                    </h3>
+                    <p className="text-[#efe9d6]/70 leading-relaxed">
+                      {post.excerpt}
+                    </p>
+                    <a href={`/blog/${post.id}`}>
+                      <button className="flex items-center gap-2 text-[#c9a227] hover:gap-3 transition-all duration-300 group/btn cursor-pointer">
+                        <span>Read More</span>
+                        <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                      </button>
+                    </a>
                   </div>
                 </div>
               </div>

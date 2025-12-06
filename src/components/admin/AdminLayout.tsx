@@ -36,13 +36,6 @@ export function AdminLayout({ children, activePage }: AdminLayoutProps) {
           </a>
         </div>
         <div className="flex items-center gap-4">
-          <a
-            href="/"
-            className="flex items-center gap-2 text-[#efe9d6]/70 hover:text-[#c9a227] transition-colors text-sm"
-          >
-            <Home className="w-4 h-4" />
-            <span className="hidden md:inline">View Website</span>
-          </a>
           <button className="flex items-center gap-2 text-[#efe9d6]/70 hover:text-[#c9a227] transition-colors text-sm">
             <LogOut className="w-4 h-4" />
             <span className="hidden md:inline">Logout</span>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { GradientButton } from '../components/GradientButton';
 
 import logo from "../assets/logo-light.svg";
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export function LoginPage() {
   const [formData, setFormData] = useState({
@@ -10,10 +12,30 @@ export function LoginPage() {
     password: '',
     remember: false
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', formData);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const success = await login(formData.email, formData.password);
+
+      if (success) {
+        navigate('/');
+      } else {
+        setError('Invalid email or password. Please try again.');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,6 +77,13 @@ export function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
               {/* Email */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-[#efe9d6] text-sm block">
@@ -113,7 +142,7 @@ export function LoginPage() {
               </div>
 
               {/* Submit */}
-              <GradientButton size="lg" className="w-full">
+              <GradientButton size="lg" className="w-full" disabled={isLoading}>
                 <span className="flex items-center justify-center gap-2">
                   Sign In
                   <ArrowRight className="w-5 h-5" />
