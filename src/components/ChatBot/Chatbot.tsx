@@ -244,12 +244,12 @@ const Chatbot = () => {
         </div>
 
         {/* Icon with pulse effect */}
-        <div className="relative w-20 h-20">
+        <div className="relative w-24 h-24">
           <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-30"></div>
           <Lottie
             animationData={chatIcon}
             loop={true}
-            className="relative z-10 hover:scale-110 transition-transform duration-300"
+            className="relative z-10 hover:scale-110 transition-transform duration-300 w-24 h-24"
           />
         </div>
       </div>
