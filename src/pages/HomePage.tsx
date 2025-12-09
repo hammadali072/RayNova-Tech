@@ -7,6 +7,9 @@ import { About } from '../components/About';
 import { Blog } from '../components/Blog';
 import { CTA } from '../components/CTA';
 import { Footer } from '../components/Footer';
+import { VisionMission } from '../components/VisionMission';
+import { WhyChooseUs } from '../components/WhyChooseUs';
+import Chatbot from '../components/ChatBot/Chatbot';
 
 export function HomePage() {
   return (
@@ -14,12 +17,15 @@ export function HomePage() {
       <Header />
       <Hero />
       <About />
+      <VisionMission />
       <Services />
-      <Features />
+      <WhyChooseUs />
+      {/* <Features /> */}
       <Process />
       <Blog />
       <CTA />
       <Footer />
+      <Chatbot />
     </div>
   );
 }

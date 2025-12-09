@@ -28,7 +28,7 @@ export function VisionMission() {
           {/* Vision */}
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-            
+
             <div className="relative h-full bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-10 hover:border-[#c9a227]/40 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(201,162,39,0.25)]">
               {/* Icon */}
               <div className="inline-flex p-6 rounded-3xl bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 backdrop-blur-sm mb-8 group-hover:scale-110 transition-all duration-500 shadow-[0_8px_20px_rgba(201,162,39,0.15)]">
@@ -38,9 +38,9 @@ export function VisionMission() {
               <div className="space-y-6">
                 <h3 className="text-[#efe9d6]">Our Vision</h3>
                 <p className="text-[#efe9d6]/70 text-lg leading-relaxed">
-                  To be the global leader in AI-powered digital solutions, transforming how businesses interact with technology and their customers through innovative, intelligent systems that drive unprecedented growth and efficiency.
+                  To ascend as a globally distinguished force in ethical AI and digital transformation, shaping the future of enterprise technology with principled innovation, disciplined excellence, and uncompromising integrity. Raynova Tech envisions a world where organizations thrive through intelligent systems engineered with purpose, guided by moral clarity, and executed with a standard of prestige that commands worldwide respect.
                 </p>
-                <div className="pt-4 space-y-3">
+                {/* <div className="pt-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] mt-2"></div>
                     <p className="text-[#efe9d6]/60">Leading AI innovation in web development</p>
@@ -53,7 +53,7 @@ export function VisionMission() {
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] mt-2"></div>
                     <p className="text-[#efe9d6]/60">Shaping the future of digital interaction</p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -61,7 +61,7 @@ export function VisionMission() {
           {/* Mission */}
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-br from-[#0e3b2c]/20 to-[#c9a227]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-            
+
             <div className="relative h-full bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-10 hover:border-[#c9a227]/40 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(201,162,39,0.25)]">
               {/* Icon */}
               <div className="inline-flex p-6 rounded-3xl bg-gradient-to-br from-[#0e3b2c]/20 to-[#c9a227]/20 backdrop-blur-sm mb-8 group-hover:scale-110 transition-all duration-500 shadow-[0_8px_20px_rgba(201,162,39,0.15)]">
@@ -71,9 +71,9 @@ export function VisionMission() {
               <div className="space-y-6">
                 <h3 className="text-[#efe9d6]">Our Mission</h3>
                 <p className="text-[#efe9d6]/70 text-lg leading-relaxed">
-                  To deliver cutting-edge AI solutions that seamlessly integrate with modern web technologies, providing businesses with intelligent tools that enhance customer engagement, streamline operations, and drive measurable results.
+                  Our mission is to deliver sovereign-grade AI and digital solutions that empower enterprises to operate with greater intelligence, efficiency, and strategic advantage. We engineer systems of the highest caliber, built upon trust, precision, transparency, and elevated craftsmanship. Through disciplined execution, ethical leadership, and a commitment to transformative outcomes, Raynova Tech stands as a premier partner for organizations seeking exceptional technological mastery and long-term strategic impact.
                 </p>
-                <div className="pt-4 space-y-3">
+                {/* <div className="pt-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#0e3b2c] to-[#c9a227] mt-2"></div>
                     <p className="text-[#efe9d6]/60">Deliver exceptional AI-powered solutions</p>
@@ -86,7 +86,7 @@ export function VisionMission() {
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#0e3b2c] to-[#c9a227] mt-2"></div>
                     <p className="text-[#efe9d6]/60">Maintain highest quality standards</p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

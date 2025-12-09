@@ -15,6 +15,8 @@ import { UsersPage } from './pages/admin/UsersPage';
 import { AddBlogPage } from './pages/admin/AddBlogPage';
 import { AddServicePage } from './pages/admin/AddServicePage';
 import { AddTeamPage } from './pages/admin/AddTeamPage';
+import { AdminMessages } from './pages/admin/AdminMessages';
+import { AdminServiceOrders } from './pages/admin/AdminServiceOrders';
 
 export default function App() {
 
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/admin/add-blog" element={<AddBlogPage />} />
           <Route path="/admin/add-service" element={<AddServicePage />} />
           <Route path="/admin/add-team" element={<AddTeamPage />} />
+          <Route path="/admin/messages" element={<AdminMessages />} />
+          <Route path="/admin/service-orders" element={<AdminServiceOrders />} />
         </Routes>
       </Router>
     </AuthProvider>

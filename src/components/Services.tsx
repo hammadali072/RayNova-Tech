@@ -1,26 +1,25 @@
+
 import { Globe, MessageSquare, Mic, Code, Zap, Brain } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import '../firebase';
+
 
 export function Services() {
-  const services = [
-    {
-      icon: Globe,
-      title: 'AI-Integrated Websites',
-      description: 'Build stunning, responsive websites with seamless AI integration for enhanced functionality and user experience.',
-      features: ['Responsive Design', 'SEO Optimized', 'AI Features', 'Fast Loading']
-    },
-    {
-      icon: MessageSquare,
-      title: 'Text Chatbots',
-      description: 'Intelligent text-based chatbots that understand context and deliver personalized customer interactions.',
-      features: ['Natural Language', 'Multi-Language', '24/7 Support', 'Easy Integration']
-    },
-    {
-      icon: Mic,
-      title: 'Voice Chatbots',
-      description: 'Advanced voice-enabled AI assistants that provide natural conversational experiences for your users.',
-      features: ['Voice Recognition', 'Natural Speech', 'Real-time Response', 'Custom Voice']
-    }
-  ];
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    const db = getDatabase();
+    const servicesRef = ref(db, 'services');
+    onValue(servicesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert object to array with id
+        const arr = Object.entries(data).map(([id, item]) => ({ id, ...item }));
+        setServices(arr);
+      }
+    });
+  }, []);
 
   return (
     <section id="services" className="py-32 px-6 relative overflow-hidden">
@@ -47,12 +46,13 @@ export function Services() {
           </p>
         </div>
 
-        {/* Services Grid */}
+        {/* Services Grid (Firebase) */}
         <div className="grid md:grid-cols-3 gap-8">
-          {services.map((service, index) => {
-            const Icon = service.icon;
-            return (
-              <div key={index} className="group relative">
+          {services.length === 0 ? (
+            <div className="col-span-3 text-center text-[#efe9d6]/70">Loading services...</div>
+          ) : (
+            services.map((service, index) => (
+              <div key={service.id || index} className="group relative" aria-label={service.serviceAltText}>
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
 
@@ -61,39 +61,36 @@ export function Services() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#c9a227]/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
 
                   <div className="relative z-10 space-y-6">
-                    {/* Icon */}
+                    {/* Icon (optional, fallback to Globe) */}
                     <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 backdrop-blur-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-[0_8px_20px_rgba(201,162,39,0.15)]">
-                      <Icon className="w-8 h-8 text-[#c9a227]" />
+                      <Globe className="w-8 h-8 text-[#c9a227]" />
                     </div>
 
                     {/* Content */}
                     <div className="space-y-4">
                       <h3 className="text-[#efe9d6] group-hover:text-[#c9a227] transition-colors duration-300">
-                        {service.title}
+                        {service.serviceName}
                       </h3>
                       <p className="text-[#efe9d6]/70 text-sm leading-relaxed">
-                        {service.description}
+                        {service.serviceDescription}
                       </p>
                     </div>
 
                     {/* Features */}
                     <ul className="space-y-3 mb-6">
-                      {service.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
-                          <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]"></div>
-                          {feature}
-                        </li>
-                      ))}
+                      {service.features && Array.isArray(service.features)
+                        ? service.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
+                            <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]"></div>
+                            {feature}
+                          </li>
+                        ))
+                        : null}
                     </ul>
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 mt-auto">
-                      {/* <a href={`/order?service=${service.title.toLowerCase().replace(/\s+/g, '-')}`} className="flex-1">
-                        <button className="w-full bg-gradient-to-r from-[#c9a227] via-[#d4b13f] to-[#0e3b2c] text-[#efe9d6] px-5 py-3 rounded-xl hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] transition-all duration-300 text-sm">
-                          Order Now
-                        </button>
-                      </a> */}
-                      <a href={`/order?service=${service.title.toLowerCase().replace(/\s+/g, '-')}`} className="flex-1">
+                      <a href={`/order?service=${service.serviceName?.toLowerCase().replace(/\s+/g, '-')}`} className="flex-1">
                         <button className="w-full border border-[#c9a227]/40 text-[#c9a227] px-5 py-3 rounded-xl hover:bg-[#c9a227]/10 transition-all duration-300 text-sm">
                           Get Quote
                         </button>
@@ -102,8 +99,8 @@ export function Services() {
                   </div>
                 </div>
               </div>
-            );
-          })}
+            ))
+          )}
         </div>
 
         {/* Additional Services */}

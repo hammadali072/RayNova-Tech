@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Search, ChevronDown, Plus, X, Mail, Users, Lock, Shield } from 'lucide-react';
+import { Search, ChevronDown, Plus, X, Mail, Users, Lock, Shield, Edit2, Trash2, Save } from 'lucide-react';
 import { GradientButton } from '../../components/GradientButton';
+import { db } from '../../firebase';
+import { ref, push, set, onValue, update, remove } from 'firebase/database';
 
 interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   password: string;
@@ -13,23 +15,14 @@ interface User {
 }
 
 export function UsersPage() {
-  // Initialize with default admin user
-  const [users, setUsers] = useState<User[]>(() => {
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      return JSON.parse(storedUsers);
-    }
-
-    // Default admin user
-    const defaultUsers = [
-      { id: 1, name: 'Admin User', email: 'admin@raynova.com', password: 'admin123', role: 'Admin' as const, registeredDate: new Date().toISOString() }
-    ];
-    localStorage.setItem('users', JSON.stringify(defaultUsers));
-    return defaultUsers;
-  });
-
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+
+  // Edit state
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -37,39 +30,131 @@ export function UsersPage() {
     role: 'User' as 'Admin' | 'User'
   });
 
-  const handleRoleChange = (userId: number, newRole: 'Admin' | 'User') => {
-    const updatedUsers = users.map(user =>
-      user.id === userId ? { ...user, role: newRole } : user
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+  const [editUserData, setEditUserData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'User' as 'Admin' | 'User'
+  });
+
+  // Handle role change for existing users
+  const handleRoleChange = async (userId: string, newRole: 'Admin' | 'User') => {
+    try {
+      const userRef = ref(db, `users/${userId}`);
+      await update(userRef, { role: newRole });
+    } catch (err) {
+      console.error('Failed to update role', err);
+      alert('Failed to update role. See console for details.');
+    }
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  // Handle delete user
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    // Prevent deleting yourself
+    const currentUser = users.find(u => u.id === userId);
+    if (currentUser?.email === 'admin@raynova.com') {
+      alert('Cannot delete the default admin account!');
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      try {
+        const userRef = ref(db, `users/${userId}`);
+        await remove(userRef);
+      } catch (err) {
+        console.error('Failed to delete user', err);
+        alert('Failed to delete user. See console for details.');
+      }
+    }
+  };
+
+  // Handle edit user
+  const handleEditUser = (user: User) => {
+    setEditingUserId(user.id);
+    setIsEditMode(true);
+    setEditUserData({
+      name: user.name || '',
+      email: user.email || '',
+      password: '', // Don't show current password for security
+      role: user.role || 'User'
+    });
+  };
+
+  // Handle update user
+  const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if email already exists
+    if (!editingUserId) return;
+
+    try {
+      const userRef = ref(db, `users/${editingUserId}`);
+
+      // Prepare update data
+      const updateData: any = {
+        name: editUserData.name,
+        email: editUserData.email,
+        role: editUserData.role,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Only update password if it's provided
+      if (editUserData.password.trim() !== '') {
+        updateData.password = editUserData.password;
+      }
+
+      await update(userRef, updateData);
+
+      // Reset edit mode
+      cancelEdit();
+      alert('User updated successfully!');
+    } catch (err) {
+      console.error('Failed to update user', err);
+      alert('Failed to update user. See console for details.');
+    }
+  };
+
+  // Cancel edit mode
+  const cancelEdit = () => {
+    setIsEditMode(false);
+    setEditingUserId(null);
+    setEditUserData({
+      name: '',
+      email: '',
+      password: '',
+      role: 'User'
+    });
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic duplicate email check against current loaded users
     if (users.some(u => u.email === newUser.email)) {
       alert('A user with this email already exists!');
       return;
     }
 
-    const userToAdd: User = {
-      id: Math.max(...users.map(u => u.id), 0) + 1,
-      name: newUser.name,
-      email: newUser.email,
-      password: newUser.password,
-      role: newUser.role,
-      registeredDate: new Date().toISOString()
-    };
+    try {
+      const usersRef = ref(db, 'users');
+      const newRef = push(usersRef);
+      const userToAdd = {
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password,
+        role: newUser.role,
+        registeredDate: new Date().toISOString()
+      };
 
-    const updatedUsers = [...users, userToAdd];
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+      await set(newRef, { id: newRef.key, ...userToAdd });
 
-    // Reset form
-    setNewUser({ name: '', email: '', password: '', role: 'User' });
-    setIsAddUserModalOpen(false);
+      // Reset form
+      setNewUser({ name: '', email: '', password: '', role: 'User' });
+      setIsAddUserModalOpen(false);
+      alert('User added successfully!');
+    } catch (err) {
+      console.error('Failed to add user', err);
+      alert('Failed to add user. See console for details.');
+    }
   };
 
   const filteredUsers = users.filter(user =>
@@ -77,219 +162,388 @@ export function UsersPage() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  useEffect(() => {
+    const usersRef = ref(db, 'users');
+    const unsub = onValue(usersRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        const arr: User[] = Object.entries(val).map(([key, v]) => ({ id: key, ...(v as any) }));
+        setUsers(arr as User[]);
+      } else {
+        // If there are no users in DB yet, create a default admin
+        const defaultUser = {
+          name: 'Admin User',
+          email: 'admin@raynova.com',
+          password: 'admin123',
+          role: 'Admin' as const,
+          registeredDate: new Date().toISOString()
+        };
+        const newRef = push(usersRef);
+        set(newRef, { id: newRef.key, ...defaultUser });
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
   return (
     <AdminLayout activePage="users">
-      <div className="mx-auto max-w-5xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-[#efe9d6] mb-2">User Management</h2>
-          <p className="text-[#efe9d6]/60">Manage registered users and their roles</p>
-        </div>
-
-        {/* Search & Stats */}
-        <div className="mb-8">
-          {/* Search */}
-          <div className='flex items-center gap-8'>
-            <div className="relative flex flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#c9a227]" />
-              <input
-                type="text"
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#232323]/60 border border-[#c9a227]/20 rounded-xl pl-12 pr-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
-              />
-            </div>
-            {/* Add User Button */}
-            <div className="flex">
-              <GradientButton
-                onClick={() => setIsAddUserModalOpen(true)}
-                className="w-full md:w-auto"
-              >
-                <div className='flex gap-2 items-center'>
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add User
-                </div>
-              </GradientButton>
-            </div>
-          </div>
-
-          {/* Stats */}
-          {/* <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-xl p-4">
-            <div className="text-[#efe9d6]/60 text-sm mb-1">Total Users</div>
-            <div className="text-[#c9a227] text-2xl">{users.length}</div>
-          </div>
-
-          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-xl p-4">
-            <div className="text-[#efe9d6]/60 text-sm mb-1">Admins</div>
-            <div className="text-[#c9a227] text-2xl">
-              {users.filter(u => u.role === 'Admin').length}
-            </div>
-          </div> */}
-        </div>
-
-
-
-        {/* Add User Modal */}
-        {isAddUserModalOpen && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-            <div className="relative bg-[#232323] backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-8 w-full max-w-2xl shadow-[0_20px_60px_rgba(201,162,39,0.3)]">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[#efe9d6] text-2xl">Add New User</h3>
-                <button
-                  onClick={() => setIsAddUserModalOpen(false)}
-                  className="text-[#efe9d6]/60 hover:text-[#c9a227] transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+      {/* Main container with proper spacing for sidebar */}
+      <div className="max-w-7xl mx-auto pl-0 transition-all duration-300">
+        <div className="p-6 lg:p-8">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <h2 className="text-[#efe9d6] text-2xl md:text-3xl font-bold mb-2">User Management</h2>
+                <p className="text-[#efe9d6]/60">Manage registered users and their roles</p>
               </div>
-
-              <form onSubmit={handleAddUser} className="space-y-6">
-                <div>
-                  <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
-                    <Users className="w-4 h-4 inline mr-2" />
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newUser.name}
-                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                    className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
-                    placeholder="Enter full name"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
-                    <Mail className="w-4 h-4 inline mr-2" />
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
-                    placeholder="email@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
-                    <Lock className="w-4 h-4 inline mr-2" />
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
-                    placeholder="Enter secure password"
-                    minLength={6}
-                  />
-                </div>
-
-                <div>
-                  <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
-                    <Shield className="w-4 h-4 inline mr-2" />
-                    Role *
-                  </label>
-                  <div className="relative w-full">
-                    <select
-                      value={newUser.role}
-                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'Admin' | 'User' })}
-                      className="w-full appearance-none bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 pr-10 text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 cursor-pointer"
-                    >
-                      <option value="User">User</option>
-                      <option value="Admin">Admin</option>
-                    </select>
-                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-[#efe9d6]/60 pointer-events-none" />
-                  </div>
-                  <p className="text-[#efe9d6]/40 text-xs mt-2">
-                    Admins have full access to the dashboard and can manage all content
-                  </p>
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddUserModalOpen(false)}
-                    className="flex-1 px-6 py-3 bg-[#efe9d6]/5 border border-[#efe9d6]/20 rounded-xl text-[#efe9d6] hover:bg-[#efe9d6]/10 transition-all duration-300"
-                  >
-                    Cancel
-                  </button>
-                  <GradientButton type="submit" className="flex">
-                    <div className='flex gap-2 items-center'>
-                      <Plus className="w-5 h-5 inline mr-2" />
-                      Create User
-                    </div>
-                  </GradientButton>
-                </div>
-              </form>
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 hover:bg-red-500/30 transition-all w-fit"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel Edit
+                </button>
+              )}
             </div>
           </div>
-        )}
 
-        {/* Users Table */}
-        <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#c9a227]/10">
-                  <th className="text-left px-6 py-4 text-[#efe9d6] text-sm">User Name</th>
-                  <th className="text-left px-6 py-4 text-[#efe9d6] text-sm">Email</th>
-                  <th className="text-left px-6 py-4 text-[#efe9d6] text-sm">Registered</th>
-                  <th className="text-left px-6 py-4 text-[#efe9d6] text-sm">Current Role</th>
-                  <th className="text-left px-6 py-4 text-[#efe9d6] text-sm">Change Role</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b border-[#c9a227]/5 hover:bg-[#c9a227]/5 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-[#efe9d6]">{user.name}</td>
-                    <td className="px-6 py-4 text-[#efe9d6]/70">{user.email}</td>
-                    <td className="px-6 py-4 text-[#efe9d6]/70">
-                      {new Date(user.registeredDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs ${user.role === 'Admin'
-                          ? 'bg-[#c9a227]/20 text-[#c9a227] border border-[#c9a227]/30'
-                          : 'bg-[#efe9d6]/10 text-[#efe9d6]/70 border border-[#efe9d6]/20'
-                          }`}
-                      >
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="relative">
-                        <select
-                          value={user.role}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value as 'Admin' | 'User')}
-                          className="appearance-none bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-lg px-4 py-2 pr-10 text-[#efe9d6] text-sm focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 cursor-pointer"
-                        >
-                          <option value="User">User</option>
-                          <option value="Admin">Admin</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#efe9d6]/60 pointer-events-none" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Search & Add Button */}
+          <div className="mb-8">
+            <div className='flex flex-col md:flex-row items-stretch md:items-center gap-4'>
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#c9a227]" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-[#232323]/60 border border-[#c9a227]/20 rounded-xl pl-12 pr-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                />
+              </div>
+              {/* Add User Button */}
+              <div className="flex">
+                <GradientButton
+                  onClick={() => setIsAddUserModalOpen(true)}
+                  className="w-full md:w-auto"
+                >
+                  <div className='flex gap-2 items-center'>
+                    <Plus className="w-5 h-5" />
+                    Add User
+                  </div>
+                </GradientButton>
+              </div>
+            </div>
           </div>
 
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12 text-[#efe9d6]/60">
-              No users found matching your search.
+
+          {/* Edit User Modal */}
+          {isEditMode && editingUserId && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+              <div className="relative bg-[#232323] backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-8 w-full max-w-2xl shadow-[0_20px_60px_rgba(201,162,39,0.3)]">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#c9a227]/20 flex items-center justify-center">
+                      <Edit2 className="w-5 h-5 text-[#c9a227]" />
+                    </div>
+                    <div>
+                      <h3 className="text-[#efe9d6] text-2xl">Edit User</h3>
+                      <p className="text-[#efe9d6]/60 text-sm">User ID: {editingUserId.substring(0, 8)}...</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={cancelEdit}
+                    className="text-[#efe9d6]/60 hover:text-[#c9a227] transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateUser} className="space-y-6">
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Users className="w-4 h-4" />
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editUserData.name}
+                      onChange={(e) => setEditUserData({ ...editUserData, name: e.target.value })}
+                      className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Mail className="w-4 h-4" />
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={editUserData.email}
+                      onChange={(e) => setEditUserData({ ...editUserData, email: e.target.value })}
+                      className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Lock className="w-4 h-4" />
+                      New Password (Leave empty to keep current)
+                    </label>
+                    <input
+                      type="password"
+                      value={editUserData.password}
+                      onChange={(e) => setEditUserData({ ...editUserData, password: e.target.value })}
+                      className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                      placeholder="Enter new password (optional)"
+                      minLength={6}
+                    />
+                    <p className="text-[#efe9d6]/40 text-xs mt-2">
+                      Leave blank if you don't want to change the password
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Shield className="w-4 h-4" />
+                      Role *
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        value={editUserData.role}
+                        onChange={(e) => setEditUserData({ ...editUserData, role: e.target.value as 'Admin' | 'User' })}
+                        className="w-full appearance-none bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 pr-10 text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 cursor-pointer"
+                      >
+                        <option value="User">User</option>
+                        <option value="Admin">Admin</option>
+                      </select>
+                      <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-[#efe9d6]/60 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="flex-1 px-6 py-3 bg-[#efe9d6]/5 border border-[#efe9d6]/20 rounded-xl text-[#efe9d6] hover:bg-[#efe9d6]/10 transition-all duration-300"
+                    >
+                      Cancel
+                    </button>
+                    <GradientButton type="submit" className="flex">
+                      <div className='flex gap-2 items-center'>
+                        <Save className="w-5 h-5" />
+                        Update User
+                      </div>
+                    </GradientButton>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
+
+          {/* Add User Modal */}
+          {isAddUserModalOpen && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+              <div className="relative bg-[#232323] backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-8 w-full max-w-2xl shadow-[0_20px_60px_rgba(201,162,39,0.3)]">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-[#efe9d6] text-2xl">Add New User</h3>
+                  <button
+                    onClick={() => setIsAddUserModalOpen(false)}
+                    className="text-[#efe9d6]/60 hover:text-[#c9a227] transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleAddUser} className="space-y-6">
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Users className="w-4 h-4" />
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newUser.name}
+                      onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                      className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Mail className="w-4 h-4" />
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Lock className="w-4 h-4" />
+                      Password *
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                      className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                      placeholder="Enter secure password"
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex gap-2 text-[#efe9d6] text-sm mb-2">
+                      <Shield className="w-4 h-4" />
+                      Role *
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        value={newUser.role}
+                        onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'Admin' | 'User' })}
+                        className="w-full appearance-none bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 pr-10 text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 cursor-pointer"
+                      >
+                        <option value="User">User</option>
+                        <option value="Admin">Admin</option>
+                      </select>
+                      <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-[#efe9d6]/60 pointer-events-none" />
+                    </div>
+                    <p className="text-[#efe9d6]/40 text-xs mt-2">
+                      Admins have full access to the dashboard and can manage all content
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddUserModalOpen(false)}
+                      className="flex-1 px-6 py-3 bg-[#efe9d6]/5 border border-[#efe9d6]/20 rounded-xl text-[#efe9d6] hover:bg-[#efe9d6]/10 transition-all duration-300"
+                    >
+                      Cancel
+                    </button>
+                    <GradientButton type="submit" className="flex">
+                      <div className='flex gap-2 items-center'>
+                        <Plus className="w-5 h-5" />
+                        Create User
+                      </div>
+                    </GradientButton>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Users Table */}
+          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px]">
+                <thead>
+                  <tr className="border-b border-[#c9a227]/10">
+                    <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">User Name</th>
+                    <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">Email</th>
+                    <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">Registered</th>
+                    <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">Current Role</th>
+                    <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">Change Role</th>
+                    <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
+                    <tr
+                      key={user.id}
+                      className="border-b border-[#c9a227]/5 hover:bg-[#c9a227]/5 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="text-[#efe9d6] font-medium">{user.name}</div>
+                        <div className="text-[#efe9d6]/40 text-xs">ID: {user.id.substring(0, 8)}...</div>
+                      </td>
+                      <td className="px-6 py-4 text-[#efe9d6]/80">{user.email}</td>
+                      <td className="px-6 py-4 text-[#efe9d6]/70">
+                        {new Date(user.registeredDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${user.role === 'Admin'
+                            ? 'bg-[#c9a227]/20 text-[#c9a227] border border-[#c9a227]/30'
+                            : 'bg-[#efe9d6]/10 text-[#efe9d6]/70 border border-[#efe9d6]/20'
+                            }`}
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="relative">
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value as 'Admin' | 'User')}
+                            className="appearance-none bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-lg px-4 py-2 pr-10 text-[#efe9d6] text-sm focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 cursor-pointer w-32"
+                            disabled={user.email === 'admin@raynova.com'}
+                          >
+                            <option value="User">User</option>
+                            <option value="Admin">Admin</option>
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#efe9d6]/60 pointer-events-none" />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditUser(user)}
+                            className="p-2 bg-[#c9a227]/20 border border-[#c9a227]/30 rounded-lg text-[#c9a227] hover:bg-[#c9a227]/30 transition-all"
+                            title="Edit User"
+                            disabled={user.email === 'admin@raynova.com'}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.name)}
+                            className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/30 transition-all"
+                            title="Delete User"
+                            disabled={user.email === 'admin@raynova.com'}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-12 text-[#efe9d6]/60">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#c9a227]/10 flex items-center justify-center">
+                  <Users className="w-8 h-8 text-[#c9a227]/40" />
+                </div>
+                No users found matching your search.
+              </div>
+            )}
+          </div>
+
+
         </div>
       </div>
     </AdminLayout>

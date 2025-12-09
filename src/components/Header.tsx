@@ -2,15 +2,25 @@ import { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 import { GradientButton } from './GradientButton';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from "../assets/logoLight.png";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false); // NEW STATE
   const { currentUser, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const menuLinks = [
+    { text: "Home", path: "/" },
+    { text: "About", path: "/about" },
+    { text: "Services", path: "/services" },
+    { text: "Blog", path: "/blog" },
+    { text: "Contact", path: "/contact" },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,26 +54,22 @@ export function Header() {
         </a>
 
         <nav className="md:flex hidden items-center gap-8">
-          <a href="/" className="text-[#efe9d6] hover:text-[#c9a227] transition-all duration-300 relative group">
-            Home
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-full transition-all duration-300"></span>
-          </a>
-          <a href="/about" className="text-[#efe9d6] hover:text-[#c9a227] transition-all duration-300 relative group">
-            About
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-full transition-all duration-300"></span>
-          </a>
-          <a href="/services" className="text-[#efe9d6] hover:text-[#c9a227] transition-all duration-300 relative group">
-            Services
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-full transition-all duration-300"></span>
-          </a>
-          <a href="/blog" className="text-[#efe9d6] hover:text-[#c9a227] transition-all duration-300 relative group">
-            Blog
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-full transition-all duration-300"></span>
-          </a>
-          <a href="/contact" className="text-[#efe9d6] hover:text-[#c9a227] transition-all duration-300 relative group">
-            Contact
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-full transition-all duration-300"></span>
-          </a>
+          {menuLinks.map(link => {
+            const isActive = location.pathname === link.path;
+            return (
+              <a
+                key={link.path}
+                href={link.path}
+                className={`relative ${isActive ? 'text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors group`}
+              >
+                {link.text}
+                <span
+                  className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
+                ></span>
+              </a>
+            );
+          })}
         </nav>
 
         <div className="md:flex hidden items-center gap-4">
@@ -125,39 +131,69 @@ export function Header() {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden bg-[#0f0f0f]/95 backdrop-blur-xl border-t border-[#c9a227]/10 duration-300 ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}>
+      <div className={`md:hidden bg-[#0f0f0f]/95 backdrop-blur-xl border-t border-[#c9a227]/10 duration-300 ${isMobileMenuOpen ? "block" : "hidden"}`}>
         <nav className="flex flex-col px-6 py-4 gap-4">
-          <a href="/" className="text-[#efe9d6] hover:text-[#c9a227] transition-colors">Home</a>
-          <a href="/about" className="text-[#efe9d6] hover:text-[#c9a227] transition-colors">About</a>
-          <a href="/services" className="text-[#efe9d6] hover:text-[#c9a227] transition-colors">Services</a>
-          <a href="/blog" className="text-[#efe9d6] hover:text-[#c9a227] transition-colors">Blog</a>
-          <a href="/contact" className="text-[#efe9d6] hover:text-[#c9a227] transition-colors">Contact</a>
+          {menuLinks.map(link => {
+            const isActive = location.pathname === link.path;
+            return (
+              <a
+                key={link.path}
+                href={link.path}
+                className={`${isActive ? '!text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors relative `}
+              >
+                {link.text}
+                <span
+                  className={`block h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'
+                    }`}
+                ></span>
+              </a>
+            );
+          })}
           {isAuthenticated && currentUser ? (
             <>
               <div className="border-t border-[#c9a227]/10 pt-4 mt-2">
-                <div className="flex items-center gap-3 mb-4 px-2">
+                <button
+                  className="flex items-center gap-3 mb-4 px-2 w-full text-left"
+                  onClick={() => setIsMobileUserMenuOpen(!isMobileUserMenuOpen)}
+                >
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#c9a227] to-[#0e3b2c] flex items-center justify-center text-[#0f0f0f]">
                     {currentUser.name.charAt(0).toUpperCase()}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <div className="text-[#efe9d6]">{currentUser.name}</div>
                     <div className="text-[#efe9d6]/60 text-sm">{currentUser.role}</div>
                   </div>
-                </div>
-                {currentUser.role === 'Admin' && (
-                  <button
-                    onClick={handleAdminDashboard}
-                    className="w-full text-left text-[#efe9d6] hover:text-[#c9a227] transition-colors py-2"
-                  >
-                    Admin Dashboard
-                  </button>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left text-[#efe9d6] hover:text-[#c9a227] transition-colors py-2"
-                >
-                  Logout
+                  <ChevronDown className={`w-5 h-5 text-[#efe9d6] transition-transform duration-300 ${isMobileUserMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
+                {/* Dropdown for mobile user menu */}
+                {isMobileUserMenuOpen && (
+                  <div className="bg-[#232323]/95 rounded-xl shadow-lg mt-2 overflow-hidden">
+                    {currentUser.role === 'Admin' && (
+                      <button
+                        onClick={() => {
+                          setIsMobileUserMenuOpen(false);
+                          handleAdminDashboard();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full text-left flex items-center gap-3 px-4 py-3 text-[#efe9d6] hover:bg-[#c9a227]/10 transition-colors"
+                      >
+                        <LayoutDashboard className="w-5 h-5 text-[#c9a227]" />
+                        Admin Dashboard
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setIsMobileUserMenuOpen(false);
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left flex items-center gap-3 px-4 py-3 text-[#efe9d6] hover:bg-[#c9a227]/10 transition-colors border-t border-[#c9a227]/10"
+                    >
+                      <LogOut className="w-5 h-5 text-[#c9a227]" />
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -166,5 +202,5 @@ export function Header() {
         </nav>
       </div>
     </header>
-  );
-}
+  )
+};

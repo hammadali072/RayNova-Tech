@@ -1,6 +1,8 @@
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { GradientButton } from './GradientButton';
 import { useState } from 'react';
+import { db } from '../firebase'; // Adjust path according to your project structure
+import { ref, push, set } from 'firebase/database';
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -12,10 +14,69 @@ export function Contact() {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
+    
+    // Reset states
+    setSubmitError('');
+    setIsSubmitting(true);
+    
+    try {
+      // Create a reference to the 'contacts' node in Firebase
+      const contactsRef = ref(db, 'contacts');
+      
+      // Generate a new unique ID for this contact submission
+      const newContactRef = push(contactsRef);
+      
+      // Prepare the contact data object
+      const contactData = {
+        id: newContactRef.key,
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim() || null,
+        company: formData.company.trim() || null,
+        service: formData.service,
+        message: formData.message.trim(),
+        status: 'new', // Status can be: new, read, responded, archived
+        createdAt: new Date().toISOString(),
+        ipAddress: '', // You can add IP tracking if needed
+        userAgent: navigator.userAgent || 'Unknown',
+        source: 'website_contact_form'
+      };
+      
+      // Save to Firebase
+      await set(newContactRef, contactData);
+      
+      // Reset form on success
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        service: '',
+        message: ''
+      });
+      
+      // Show success message
+      setSubmitSuccess(true);
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setSubmitSuccess(false);
+      }, 5000);
+      
+      console.log('Contact form submitted successfully:', contactData);
+      
+    } catch (error: any) {
+      console.error('Error submitting contact form:', error);
+      setSubmitError('Failed to submit your message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -23,6 +84,10 @@ export function Contact() {
       ...formData,
       [e.target.name]: e.target.value
     });
+    
+    // Clear any previous success/error messages when user starts typing
+    if (submitSuccess) setSubmitSuccess(false);
+    if (submitError) setSubmitError('');
   };
 
   const contactInfo = [
@@ -122,6 +187,30 @@ export function Contact() {
               <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-100 transition-all duration-500"></div>
 
               <form onSubmit={handleSubmit} className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-8 md:p-10">
+                {/* Success Message */}
+                {submitSuccess && (
+                  <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-sm">Thank you! Your message has been sent successfully. We'll get back to you soon.</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Error Message */}
+                {submitError && (
+                  <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.22 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                      <span className="text-sm">{submitError}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* Name Field */}
                   <div className="space-y-2">
@@ -137,6 +226,7 @@ export function Contact() {
                       required
                       className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                       placeholder="John Doe"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -154,6 +244,7 @@ export function Contact() {
                       required
                       className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                       placeholder="john@example.com"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -170,6 +261,7 @@ export function Contact() {
                       onChange={handleChange}
                       className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                       placeholder="+1 (555) 000-0000"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -186,6 +278,7 @@ export function Contact() {
                       onChange={handleChange}
                       className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                       placeholder="Your Company"
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -201,13 +294,15 @@ export function Contact() {
                     value={formData.service}
                     onChange={handleChange}
                     required
-                    className="w-full border border-[#c9a227]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                    className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                    disabled={isSubmitting}
                   >
                     <option value="">Select a service</option>
-                    <option value="website">AI-Integrated Website Development</option>
+                    <option value="ai-website">AI-Integrated Website Development</option>
                     <option value="text-chatbot">Text Chatbot Development</option>
                     <option value="voice-chatbot">Voice Chatbot Development</option>
-                    <option value="consulting">AI Consulting</option>
+                    <option value="ai-consulting">AI Consulting</option>
+                    <option value="custom-solution">Custom AI Solution</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
@@ -226,14 +321,32 @@ export function Contact() {
                     rows={6}
                     className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 resize-none"
                     placeholder="Tell us about your project..."
+                    disabled={isSubmitting}
                   />
                 </div>
 
                 {/* Submit Button */}
-                <GradientButton size="lg" className="w-full">
+                <GradientButton 
+                  size="lg" 
+                  className="w-full"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
                   <span className="flex items-center justify-center gap-2">
-                    Send Message
-                    <Send className="w-5 h-5" />
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        Send Message
+                        <Send className="w-5 h-5" />
+                      </>
+                    )}
                   </span>
                 </GradientButton>
 

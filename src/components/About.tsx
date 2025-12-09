@@ -35,61 +35,30 @@ export function About() {
               About RayNova Tech
             </h2>
             <p className="text-[#efe9d6]/80 leading-relaxed">
-              At RayNova Tech, we specialize in creating cutting-edge web solutions powered by artificial intelligence.
-              Our expertise spans from building responsive, modern websites to developing custom AI chatbots that transform
-              how businesses interact with their customers.
+              Raynova Tech is a prestige global AI and digital transformation company operating under the leadership of Al Rayah Global Group LTD (United Kingdom) in strategic alliance with TechTide Corporate LLP (Pakistan). We serve as a unified powerhouse dedicated to building intelligent, enterprise-grade solutions for organizations that demand superior performance, ethical accountability, and world-class execution.
             </p>
             <p className="text-[#efe9d6]/80 leading-relaxed">
-              We combine innovative technology with practical business solutions, ensuring every project delivers
-              measurable results and exceptional user experiences.
+              Our expertise spans:
             </p>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 pt-6">
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                <div className="relative bg-[#232323]/60 backdrop-blur-xl p-6 rounded-2xl border border-[#c9a227]/20 group-hover:border-[#c9a227]/40 transition-all duration-500 group-hover:shadow-[0_10px_40px_rgba(201,162,39,0.2)]">
-                  <div className="bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Briefcase className="w-7 h-7 text-[#c9a227]" />
-                  </div>
-                  <div className="text-[#efe9d6] text-3xl mb-1 bg-gradient-to-r from-[#c9a227] to-[#d4b13f] bg-clip-text text-transparent">150+</div>
-                  <div className="text-[#efe9d6]/60 text-sm">Projects Completed</div>
-                </div>
-              </div>
-
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0e3b2c]/20 to-[#c9a227]/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                <div className="relative bg-[#232323]/60 backdrop-blur-xl p-6 rounded-2xl border border-[#c9a227]/20 group-hover:border-[#c9a227]/40 transition-all duration-500 group-hover:shadow-[0_10px_40px_rgba(201,162,39,0.2)]">
-                  <div className="bg-gradient-to-br from-[#0e3b2c]/20 to-[#c9a227]/20 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Bot className="w-7 h-7 text-[#c9a227]" />
-                  </div>
-                  <div className="text-[#efe9d6] text-3xl mb-1 bg-gradient-to-r from-[#c9a227] to-[#d4b13f] bg-clip-text text-transparent">50+</div>
-                  <div className="text-[#efe9d6]/60 text-sm">AI Models Built</div>
-                </div>
-              </div>
-
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#d4b13f]/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                <div className="relative bg-[#232323]/60 backdrop-blur-xl p-6 rounded-2xl border border-[#c9a227]/20 group-hover:border-[#c9a227]/40 transition-all duration-500 group-hover:shadow-[0_10px_40px_rgba(201,162,39,0.2)]">
-                  <div className="bg-gradient-to-br from-[#c9a227]/20 to-[#d4b13f]/20 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Users className="w-7 h-7 text-[#c9a227]" />
-                  </div>
-                  <div className="text-[#efe9d6] text-3xl mb-1 bg-gradient-to-r from-[#c9a227] to-[#d4b13f] bg-clip-text text-transparent">100+</div>
-                  <div className="text-[#efe9d6]/60 text-sm">Happy Clients</div>
-                </div>
-              </div>
-
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#d4b13f]/20 to-[#0e3b2c]/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                <div className="relative bg-[#232323]/60 backdrop-blur-xl p-6 rounded-2xl border border-[#c9a227]/20 group-hover:border-[#c9a227]/40 transition-all duration-500 group-hover:shadow-[0_10px_40px_rgba(201,162,39,0.2)]">
-                  <div className="bg-gradient-to-br from-[#d4b13f]/20 to-[#0e3b2c]/20 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <TrendingUp className="w-7 h-7 text-[#c9a227]" />
-                  </div>
-                  <div className="text-[#efe9d6] text-3xl mb-1 bg-gradient-to-r from-[#c9a227] to-[#d4b13f] bg-clip-text text-transparent">98%</div>
-                  <div className="text-[#efe9d6]/60 text-sm">Success Rate</div>
-                </div>
-              </div>
-            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]" />
+                AI automation & intelligent system design
+              </li>
+              <li className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]" />
+                Enterprise software engineering
+              </li>
+              <li className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]" />
+                Digital transformation for large-scale organizations
+              </li>
+              <li className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]" />
+                Strategic technology consulting
+              </li>
+            </ul>
           </div>
         </div>
       </div>
