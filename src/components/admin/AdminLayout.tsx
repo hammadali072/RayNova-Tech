@@ -49,10 +49,16 @@ export function AdminLayout({ children, activePage }: AdminLayoutProps) {
       <div className="flex flex-1 pt-20">
         {/* Sidebar */}
         <aside
-          className={`w-64 h-full bg-[#232323]/60 backdrop-blur-xl border-r border-[#c9a227]/10 transition-transform duration-300 z-40
-            fixed lg:translate-x-0 top-10 left-0
-            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full hidden'}
-            ${!isSidebarOpen ? 'lg:translate-x-full hidden' : ''}
+          className={`
+            bg-[#232323]/60 backdrop-blur-xl border-r border-[#c9a227]/10 z-40
+            fixed top-20 left-0 h-full transition-transform duration-300
+            w-64
+            transform
+            -translate-x-full
+            lg:translate-x-0
+            lg:static
+            lg:min-w-[1024px]
+            ${isSidebarOpen ? 'translate-x-0' : ''}
           `}
         >
           <nav className="p-4 space-y-2">
@@ -78,9 +84,9 @@ export function AdminLayout({ children, activePage }: AdminLayoutProps) {
 
         {/* Main Content */}
         <main
-          className={`flex-1 transition-all duration-300 bg-transparent p-6 md:p-8
-            ${isSidebarOpen ? 'ml-64' : 'ml-0'}
-            ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}
+          className={`
+            flex-1 transition-all duration-300 bg-transparent p-6 md:p-8
+            ${isSidebarOpen ? 'lg:ml-[1024px]' : 'lg:ml-0'}
           `}
           style={{
             transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)'

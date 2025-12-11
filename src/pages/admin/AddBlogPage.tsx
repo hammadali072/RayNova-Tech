@@ -426,9 +426,9 @@ export function AddBlogPage() {
 
         <form onSubmit={handleSubmit}>
           {/* Basic Info */}
-          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-8 mb-6">
+          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl lg:p-8 p-5 mb-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-[#efe9d6]">Basic Information</h3>
+              <h3 className="lg:text-4xl text-2xl text-[#efe9d6]">Basic Information</h3>
               {isEditMode && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-[#c9a227]/20 border border-[#c9a227]/30 rounded-lg text-[#efe9d6] text-sm">
                   <Edit2 className="w-3 h-3" />
@@ -528,7 +528,7 @@ export function AddBlogPage() {
               {/* Author Details */}
               <div className="mt-4 pt-4 border-t border-[#c9a227]/10 space-y-4">
                 <h4 className="text-[#efe9d6] text-sm">Author Details</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="authorName" className="text-[#efe9d6] text-sm block">Author Name</label>
                     <input id="authorName" value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Author name" className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6]" />
@@ -539,7 +539,7 @@ export function AddBlogPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 items-start">
+                <div className="grid sm:grid-cols-2 gap-4 items-start">
                   <div className="space-y-2">
                     <label htmlFor="authorAvatar" className="text-[#efe9d6] text-sm block">Author Avatar URL or choose file</label>
                     <input id="authorAvatar" value={authorAvatar && isValidUrl(authorAvatar) ? authorAvatar : ''} onChange={(e) => handleAuthorAvatarChange(e.target.value)} placeholder="https://... (optional)" className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6]" />
@@ -571,7 +571,7 @@ export function AddBlogPage() {
           </div>
 
           {/* Content Builder */}
-          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-8 mb-6">
+          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl lg:p-8 p-5 mb-6">
             <h3 className="text-[#efe9d6] mb-6">Blog Content</h3>
 
             {/* Toolbar */}
@@ -651,7 +651,7 @@ export function AddBlogPage() {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4 justify-end">
+          <div className="flex gap-4 flex-wrap lg:justify-end justify-start">
             {isEditMode && (
               <button
                 type="button"
@@ -682,7 +682,7 @@ export function AddBlogPage() {
 
         {/* Published Blogs List */}
         <div className="mt-12">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center flex-wrap mb-4">
             <h3 className="text-[#efe9d6]">Published Blogs</h3>
             <div className="text-sm text-[#efe9d6]/60">{blogs.length} blogs published</div>
           </div>
@@ -694,7 +694,7 @@ export function AddBlogPage() {
                 const firstImageBlock = (b.contentBlocks || []).find((cb: any) => cb.type === 'image' && cb.content && isValidUrl(cb.content));
                 const thumbnail = b.featuredImage ? b.featuredImage : (firstImageBlock ? firstImageBlock.content : null);
                 return (
-                  <div key={b.id} className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-6 flex gap-6 items-start group hover:border-[#c9a227]/30 transition-all">
+                  <div key={b.id} className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-6 flex sm:flex-row flex-col gap-6 items-start group hover:border-[#c9a227]/30 transition-all">
                     {thumbnail ? (
                       <div className="w-40 h-28 overflow-hidden rounded-lg flex-shrink-0 border border-[#c9a227]/10">
                         <img src={thumbnail} alt={b.title} className="w-full h-full object-cover" />

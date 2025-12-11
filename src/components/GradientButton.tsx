@@ -6,12 +6,13 @@ interface GradientButtonProps {
   className?: string;
   variant?: 'primary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
+  type?: 'submit'
 }
 
-export function GradientButton({ 
-  children, 
-  onClick, 
-  className = '', 
+export function GradientButton({
+  children,
+  onClick,
+  className = '',
   variant = 'primary',
   size = 'md'
 }: GradientButtonProps) {
@@ -43,7 +44,7 @@ export function GradientButton({
       }}
     >
       <span className="relative z-10 text-[#efe9d6]">{children}</span>
-      <div 
+      <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
           background: 'linear-gradient(135deg, #0e3b2c 0%, #1a4d38 25%, #c9a227 50%, #d4b13f 75%, #0e3b2c 100%)',

@@ -44,11 +44,36 @@ export function BlogDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [blog, setBlog] = useState<BlogPost | null>(null);
-  const [relatedBlogs, setRelatedBlogs] = useState<BlogPost[]>([]);
+  const [relatedBlogs, setRelatedBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+
+  // Helper function to extract image from blog data
+  const extractImageFromBlogData = (blogData: any): string => {
+    // Try featuredImage first
+    if (blogData.featuredImage) return blogData.featuredImage;
+    
+    // Try imageUrl
+    if (blogData.imageUrl) return blogData.imageUrl;
+    
+    // Try image
+    if (blogData.image) return blogData.image;
+    
+    // Extract image from contentBlocks
+    if (blogData.contentBlocks && Array.isArray(blogData.contentBlocks)) {
+      const imageBlock = blogData.contentBlocks.find((block: any) => 
+        block?.type === 'image' && block?.content
+      );
+      if (imageBlock) {
+        return imageBlock.content;
+      }
+    }
+    
+    // Default fallback image
+    return 'https://via.placeholder.com/400x300/0f0f0f/c9a227?text=Blog+Image';
+  };
 
   // Fetch blog data from Firebase
   useEffect(() => {
@@ -57,9 +82,9 @@ export function BlogDetailPage() {
         setLoading(true);
         setBlog(null);
         setRelatedBlogs([]);
-
+        
         const db = getDatabase();
-
+        
         if (!id) {
           navigate('/blog');
           return;
@@ -68,7 +93,7 @@ export function BlogDetailPage() {
         // Fetch specific blog
         const blogRef = ref(db, `blogs/${id}`);
         const blogSnapshot = await get(blogRef);
-
+        
         if (!blogSnapshot.exists()) {
           console.error('Blog not found:', id);
           navigate('/blog');
@@ -76,14 +101,14 @@ export function BlogDetailPage() {
         }
 
         const blogData = blogSnapshot.val();
-
+        
         // Format blog data
         const formattedBlog: BlogPost = {
           id: id,
           title: blogData.title || '',
           excerpt: blogData.excerpt || '',
           description: blogData.description || '',
-          featuredImage: blogData.imageUrl || blogData.image || blogData.featuredImage || '',
+          featuredImage: extractImageFromBlogData(blogData),
           imageUrl: blogData.imageUrl || blogData.image || '',
           category: blogData.category || 'Uncategorized',
           publishDate: blogData.date || blogData.publishDate || new Date().toLocaleDateString(),
@@ -112,30 +137,47 @@ export function BlogDetailPage() {
 
         setBlog(formattedBlog);
 
-        // Fetch related blogs (excluding current blog)
+        // Fetch all blogs for related posts
         const blogsRef = ref(db, 'blogs');
-        const blogsQuery = query(blogsRef, orderByChild('date'), limitToLast(4));
-        const blogsSnapshot = await get(blogsQuery);
-
+        const blogsSnapshot = await get(blogsRef);
+        
         if (blogsSnapshot.exists()) {
           const allBlogs = blogsSnapshot.val();
-          const related = Object.entries(allBlogs)
-            .filter(([blogId]) => blogId !== id)
-            .slice(0, 3)
-            .map(([blogId, data]: [string, any]) => ({
-              id: blogId,
-              title: data.title || '',
-              image: data.imageUrl || data.image || '',
-              category: data.category || 'Uncategorized'
-            }));
-
-          setRelatedBlogs(related);
+          const relatedBlogsData = [];
+          
+          // Convert to array and filter out current blog
+          const allBlogsEntries = Object.entries(allBlogs);
+          for (const entry of allBlogsEntries) {
+            const blogId = entry[0] as string;
+            const data = entry[1] as any;
+            
+            if (blogId !== id) {
+              // Extract image for each related blog
+              const relatedImage = extractImageFromBlogData(data);
+              
+              relatedBlogsData.push({
+                id: blogId,
+                title: data.title || '',
+                image: relatedImage,
+                imageUrl: relatedImage,
+                category: data.category || 'Uncategorized',
+                date: data.date || data.createdAt || new Date().toISOString()
+              });
+            }
+          }
+          
+          // Sort by date (newest first) and take 3
+          const sortedRelated = relatedBlogsData.sort((a: any, b: any) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          ).slice(0, 3);
+          
+          setRelatedBlogs(sortedRelated);
           setBlog(prev => prev ? {
             ...prev,
-            relatedPosts: related
+            relatedPosts: sortedRelated
           } : null);
         }
-
+        
         setLoading(false);
 
       } catch (error) {
@@ -230,7 +272,7 @@ export function BlogDetailPage() {
         {/* Featured Image */}
         <div className="relative h-[50vh] md:h-[60vh]">
           <ImageWithFallback
-            src={blog.featuredImage || blog.imageUrl}
+            src={blog.featuredImage}
             alt={blog.title}
             fallbackSrc="https://via.placeholder.com/1200x600/0f0f0f/c9a227?text=Blog+Image"
             className="w-full h-full object-cover"
@@ -367,25 +409,25 @@ export function BlogDetailPage() {
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <h4 className="text-[#efe9d6] text-lg font-medium">Share this article</h4>
                     <div className="flex gap-3">
-                      <button
+                      <button 
                         onClick={() => handleShare('facebook')}
                         className="w-11 h-11 bg-[#0f0f0f]/60 backdrop-blur-xl rounded-xl flex items-center justify-center border border-[#c9a227]/20 hover:bg-gradient-to-br hover:from-[#c9a227] hover:to-[#0e3b2c] hover:border-transparent transition-all duration-300 group"
                       >
                         <Facebook className="w-5 h-5 text-[#efe9d6]" />
                       </button>
-                      <button
+                      <button 
                         onClick={() => handleShare('twitter')}
                         className="w-11 h-11 bg-[#0f0f0f]/60 backdrop-blur-xl rounded-xl flex items-center justify-center border border-[#c9a227]/20 hover:bg-gradient-to-br hover:from-[#c9a227] hover:to-[#0e3b2c] hover:border-transparent transition-all duration-300 group"
                       >
                         <Twitter className="w-5 h-5 text-[#efe9d6]" />
                       </button>
-                      <button
+                      <button 
                         onClick={() => handleShare('linkedin')}
                         className="w-11 h-11 bg-[#0f0f0f]/60 backdrop-blur-xl rounded-xl flex items-center justify-center border border-[#c9a227]/20 hover:bg-gradient-to-br hover:from-[#c9a227] hover:to-[#0e3b2c] hover:border-transparent transition-all duration-300 group"
                       >
                         <Linkedin className="w-5 h-5 text-[#efe9d6]" />
                       </button>
-                      <button
+                      <button 
                         onClick={() => handleShare('copy')}
                         className="w-11 h-11 bg-[#0f0f0f]/60 backdrop-blur-xl rounded-xl flex items-center justify-center border border-[#c9a227]/20 hover:bg-gradient-to-br hover:from-[#c9a227] hover:to-[#0e3b2c] hover:border-transparent transition-all duration-300 group"
                       >
@@ -486,8 +528,8 @@ export function BlogDetailPage() {
                 <div className="bg-[#232323]/40 backdrop-blur-xl border border-[#c9a227]/10 rounded-3xl p-6">
                   <h3 className="text-[#efe9d6] mb-6 text-lg font-medium">Related Articles</h3>
                   <div className="space-y-4">
-                    {blog.relatedPosts && blog.relatedPosts.length > 0 ? (
-                      blog.relatedPosts.map((post: any) => (
+                    {relatedBlogs.length > 0 ? (
+                      relatedBlogs.map((post: any) => (
                         <a
                           key={post.id}
                           href={`/blog/${post.id}`}
@@ -498,16 +540,19 @@ export function BlogDetailPage() {
                           }}
                         >
                           <div className="flex gap-4 p-3 rounded-xl hover:bg-[#c9a227]/5 transition-all">
-                            <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border border-[#c9a227]/10">
+                            {/* Image Container */}
+                            <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-[#c9a227]/20">
                               <ImageWithFallback
-                                src={post.image}
+                                src={post.image || post.imageUrl}
                                 alt={post.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                fallbackSrc="https://via.placeholder.com/64/0f0f0f/c9a227?text=Image"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                               />
                             </div>
+                            
                             <div className="flex-1 min-w-0">
-                              <div className="text-[#c9a227] text-xs mb-1">{post.category}</div>
-                              <h4 className="text-[#efe9d6] text-sm leading-tight group-hover:text-[#c9a227] transition-colors line-clamp-2">
+                              <div className="text-[#c9a227] text-xs mb-1 font-medium">{post.category}</div>
+                              <h4 className="text-[#efe9d6] text-sm leading-tight group-hover:text-[#c9a227] transition-colors line-clamp-2 font-medium">
                                 {post.title}
                               </h4>
                             </div>

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Search, ChevronDown, Plus, X, Mail, Users, Lock, Shield, Edit2, Trash2, Save } from 'lucide-react';
 import { GradientButton } from '../../components/GradientButton';
-import { db } from '../../firebase';
+import { auth, db } from '../../firebase';
 import { ref, push, set, onValue, update, remove } from 'firebase/database';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 
 interface User {
   id: string;
@@ -59,8 +60,14 @@ export function UsersPage() {
 
     if (window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
       try {
+        // Delete from Realtime Database
         const userRef = ref(db, `users/${userId}`);
         await remove(userRef);
+
+        // Note: Deleting from Firebase Auth requires special permissions
+        // Admin SDK is needed for this, which requires backend server
+        // For now, we only delete from database
+        // You can manually delete from Firebase Console if needed
       } catch (err) {
         console.error('Failed to delete user', err);
         alert('Failed to delete user. See console for details.');
@@ -135,25 +142,45 @@ export function UsersPage() {
     }
 
     try {
-      const usersRef = ref(db, 'users');
-      const newRef = push(usersRef);
+      // Step 1: Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        newUser.email,
+        newUser.password
+      );
+
+      const firebaseUID = userCredential.user.uid;
+
+      // Step 2: Store user data in Realtime Database with Firebase UID
+      const usersRef = ref(db, `users/${firebaseUID}`);
       const userToAdd = {
+        id: firebaseUID,
         name: newUser.name,
         email: newUser.email,
-        password: newUser.password,
         role: newUser.role,
         registeredDate: new Date().toISOString()
       };
 
-      await set(newRef, { id: newRef.key, ...userToAdd });
+      await set(usersRef, userToAdd);
 
       // Reset form
-      setNewUser({ name: '', email: '', password: '', role: 'User' });
+      setNewUser({
+        name: '',
+        email: '',
+        password: '',
+        role: 'User'
+      });
       setIsAddUserModalOpen(false);
       alert('User added successfully!');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to add user', err);
-      alert('Failed to add user. See console for details.');
+      if (err.code === 'auth/email-already-in-use') {
+        alert('This email is already registered!');
+      } else if (err.code === 'auth/weak-password') {
+        alert('Password should be at least 6 characters!');
+      } else {
+        alert('Failed to add user. ' + err.message);
+      }
     }
   };
 
@@ -452,9 +479,9 @@ export function UsersPage() {
           )}
 
           {/* Users Table */}
-          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl overflow-hidden">
+          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
+              <table className="min-w-max w-full">
                 <thead>
                   <tr className="border-b border-[#c9a227]/10">
                     <th className="text-left px-6 py-4 text-[#efe9d6] text-sm font-medium">User Name</th>

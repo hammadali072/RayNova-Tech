@@ -54,10 +54,12 @@ body.modal-open {
 }
 /* Chatbot.css */
 .chat-container {
-  scrollbar-width: thin;
-  scrollbar-color: #4f46e5 #1f2937;
+  height: 400px !important;
+  max-height: 400px !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
-
 .chat-container::-webkit-scrollbar {
   width: 8px;
 }

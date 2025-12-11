@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { GradientButton } from '../components/GradientButton';
-
 import logo from "../assets/logo-light.svg";
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +23,7 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Use context login method instead
       const success = await login(formData.email, formData.password);
 
       if (success) {
@@ -31,8 +31,8 @@ export function LoginPage() {
       } else {
         setError('Invalid email or password. Please try again.');
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -165,7 +165,7 @@ export function AddServicePage() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-8">
+          <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl lg:p-8 p-5">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-[#efe9d6]">Service Details</h3>
               {isEditMode && (
@@ -228,7 +228,7 @@ export function AddServicePage() {
 
               {/* Features Section */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
                   <label className="text-[#efe9d6] text-sm">
                     Features (Bullet Points) *
                   </label>
@@ -278,7 +278,7 @@ export function AddServicePage() {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex justify-end gap-4 mt-8">
+          <div className="flex lg:justify-end justify-start flex-wrap gap-4 mt-8">
             {isEditMode && (
               <button
                 type="button"

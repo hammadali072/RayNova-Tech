@@ -307,7 +307,7 @@ export function AddTeamPage() {
 
             {/* Form Fields - Right Side */}
             <div className="md:col-span-2">
-              <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-8">
+              <div className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl lg:p-8 p-5">
                 <h3 className="text-[#efe9d6] mb-6">Member Information</h3>
 
                 <div className="space-y-6">
@@ -432,7 +432,7 @@ export function AddTeamPage() {
               </div>
 
               {/* Submit */}
-              <div className="flex justify-end gap-4 mt-6">
+              <div className="flex lg:justify-end justify-start gap-4 flex-wrap mt-6">
                 <button
                   type="button"
                   className="px-8 py-3 border border-[#c9a227]/40 text-[#efe9d6] rounded-xl hover:bg-[#c9a227]/10 transition-all"
@@ -459,7 +459,7 @@ export function AddTeamPage() {
                   {/* Edit/Delete Icons */}
 
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex sm:items-center sm:flex-row flex-col gap-4">
                     <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
                       {t.photoURL ? (
                         <img src={t.photoURL} alt={`Photo of ${t.memberName}`} className="w-full h-full object-cover" />

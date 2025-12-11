@@ -10,6 +10,27 @@ export function Blog() {
   const navigate = useNavigate();
   const [blogPosts, setBlogPosts] = useState([]);
 
+  // Try to pick a sensible preview paragraph for each blog card
+  const getFirstParagraph = (item: any) => {
+    if (item?.firstParagraph) return item.firstParagraph;
+    if (item?.description) return item.description;
+
+    const contentBlocks = Array.isArray(item?.contentBlocks)
+      ? item.contentBlocks
+      : item?.contentBlocks && typeof item.contentBlocks === 'object'
+        ? Object.values(item.contentBlocks)
+        : [];
+
+    const paragraphFromBlocks = (contentBlocks as any[]).find((block) => block?.type === 'paragraph')?.content;
+    if (paragraphFromBlocks) return paragraphFromBlocks;
+
+    const contentArray = Array.isArray(item?.content) ? item.content : [];
+    const paragraphFromContent = (contentArray as any[]).find((block) => block?.type === 'paragraph')?.content;
+    if (paragraphFromContent) return paragraphFromContent;
+
+    return '';
+  };
+
   useEffect(() => {
     const db = getDatabase();
     const blogsRef = ref(db, 'blogs');
@@ -28,7 +49,7 @@ export function Blog() {
             }
           }
 
-          return { id, ...item, imageUrl };
+          return { id, ...item, imageUrl, firstParagraph: getFirstParagraph(item) };
         });
         setBlogPosts(arr);
       }
@@ -95,7 +116,7 @@ export function Blog() {
                         {post.title}
                       </h3>
                       <p className="text-[#efe9d6]/70 leading-relaxed">
-                        {post.firstParagraph || "No Text"}
+                        {post.firstParagraph || 'No description available yet.'}
                       </p>
                       <button
                         onClick={() => navigate(`/blog/${post.id}`)}
@@ -113,7 +134,7 @@ export function Blog() {
         </div>
 
         <div className="text-center mt-12">
-          <GradientButton size="lg">View All Articles</GradientButton>
+          <GradientButton size="lg" onClick={() => { navigate("/blog") }}>View All Articles</GradientButton>
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { RequireAdmin } from './components/admin/RequireAdmin';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
 import { ServicesPage } from './pages/ServicesPage';
@@ -17,12 +18,14 @@ import { AddServicePage } from './pages/admin/AddServicePage';
 import { AddTeamPage } from './pages/admin/AddTeamPage';
 import { AdminMessages } from './pages/admin/AdminMessages';
 import { AdminServiceOrders } from './pages/admin/AdminServiceOrders';
+import ScrollToTop from './components/scrollToTop';
 
 export default function App() {
 
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
@@ -36,13 +39,13 @@ export default function App() {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/order" element={<ServiceOrderPage />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/users" element={<UsersPage />} />
-          <Route path="/admin/add-blog" element={<AddBlogPage />} />
-          <Route path="/admin/add-service" element={<AddServicePage />} />
-          <Route path="/admin/add-team" element={<AddTeamPage />} />
-          <Route path="/admin/messages" element={<AdminMessages />} />
-          <Route path="/admin/service-orders" element={<AdminServiceOrders />} />
+          {/* Admin Routes - Protected */}
+          <Route path="/admin/users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
+          <Route path="/admin/add-blog" element={<RequireAdmin><AddBlogPage /></RequireAdmin>} />
+          <Route path="/admin/add-service" element={<RequireAdmin><AddServicePage /></RequireAdmin>} />
+          <Route path="/admin/add-team" element={<RequireAdmin><AddTeamPage /></RequireAdmin>} />
+          <Route path="/admin/messages" element={<RequireAdmin><AdminMessages /></RequireAdmin>} />
+          <Route path="/admin/service-orders" element={<RequireAdmin><AdminServiceOrders /></RequireAdmin>} />
         </Routes>
       </Router>
     </AuthProvider>

@@ -18,17 +18,22 @@ export function Footer() {
             </p>
             <div className="space-y-3">
               <a href="mailto:contact@raynova.tech" className="flex items-center gap-2 text-[#efe9d6]/70 text-sm group">
-                <Mail className="w-4 h-4 text-[#c9a227]" />
+                <Mail className="w-5 h-5 text-[#c9a227]" />
                 <span className="duration-300 group-hover:text-[#c9a227]">contact@raynova.tech</span>
               </a>
               <div className="flex items-center gap-2 text-[#efe9d6]/70 text-sm transition-colors cursor-pointer">
-                <Phone className="w-4 h-4 text-[#c9a227]" />
-                <a href="tel:+447848101848" className="duration-300 hover:text-[#c9a227]">+44 7848 101848</a> |
-                <a href="tel:+41797265555" className="duration-300 hover:text-[#c9a227]">+41 79 726 55 55</a>
+                <Phone className="w-5 h-5 text-[#c9a227]" />
+                <div className='flex flex-col gap-1'>
+                  <a href="tel:+447848101848" className="duration-300 hover:text-[#c9a227]">+44 7848 101848</a>
+                  <a href="tel:+41797265555" className="duration-300 hover:text-[#c9a227]">+41 79 726 55 55</a>
+                  <a href="tel:+16467771766" className="duration-300 hover:text-[#c9a227]">+1 646 777 1766</a>
+                </div>
               </div>
               <div className="flex items-center gap-2 text-[#efe9d6]/70 text-sm transition-colors cursor-pointer">
-                <MapPin className="w-4 h-4 text-[#c9a227]" />
-                <a href="https://www.google.com/maps/place/11-12+Old+Bond+St,+London+W1S+4PN,+UK/@51.5087334,-0.1430446,17z/data=!4m6!3m5!1s0x487604d61bc2ffff:0x241515a3a056e276!8m2!3d51.5087334!4d-0.1404643!16s%2Fg%2F11xt03y17h?entry=ttu&g_ep=EgoyMDI1MTEzMC4wIKXMDSoASAFQAw%3D%3D" className="duration-300 hover:text-[#c9a227]">11-12 Old Bond Street, Mayfair London W1S 4PN United Kingdom</a>
+                <MapPin className="w-5 h-5 text-[#c9a227]" />
+                <a href="https://www.google.com/maps/place/11-12+Old+Bond+St,+London+W1S+4PN,+UK/@51.5087334,-0.1430446,17z/data=!4m6!3m5!1s0x487604d61bc2ffff:0x241515a3a056e276!8m2!3d51.5087334!4d-0.1404643!16s%2Fg%2F11xt03y17h?entry=ttu&g_ep=EgoyMDI1MTEzMC4wIKXMDSoASAFQAw%3D%3D" target="_blank" className="duration-300 hover:text-[#c9a227]">
+                  11-12 Old Bond Street, Mayfair <br /> London W1S 4PN <br /> United Kingdom
+                </a>
               </div>
             </div>
           </div>

@@ -20,18 +20,18 @@ export function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Reset states
     setSubmitError('');
     setIsSubmitting(true);
-    
+
     try {
       // Create a reference to the 'contacts' node in Firebase
       const contactsRef = ref(db, 'contacts');
-      
+
       // Generate a new unique ID for this contact submission
       const newContactRef = push(contactsRef);
-      
+
       // Prepare the contact data object
       const contactData = {
         id: newContactRef.key,
@@ -47,10 +47,10 @@ export function Contact() {
         userAgent: navigator.userAgent || 'Unknown',
         source: 'website_contact_form'
       };
-      
+
       // Save to Firebase
       await set(newContactRef, contactData);
-      
+
       // Reset form on success
       setFormData({
         name: '',
@@ -60,17 +60,17 @@ export function Contact() {
         service: '',
         message: ''
       });
-      
+
       // Show success message
       setSubmitSuccess(true);
-      
+
       // Hide success message after 5 seconds
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 5000);
-      
+
       console.log('Contact form submitted successfully:', contactData);
-      
+
     } catch (error: any) {
       console.error('Error submitting contact form:', error);
       setSubmitError('Failed to submit your message. Please try again later.');
@@ -84,7 +84,7 @@ export function Contact() {
       ...formData,
       [e.target.name]: e.target.value
     });
-    
+
     // Clear any previous success/error messages when user starts typing
     if (submitSuccess) setSubmitSuccess(false);
     if (submitError) setSubmitError('');
@@ -100,7 +100,7 @@ export function Contact() {
     {
       icon: Phone,
       title: 'Call Us',
-      content: '+44 7848 101848',
+      content: ['+44 7848 101848', '+41 79 726 55 55', '+1 646 777 1766'],
       subtext: 'Mon-Fri from 8am to 6pm'
     },
     {
@@ -112,14 +112,14 @@ export function Contact() {
   ];
 
   return (
-    <section id="contact" className="py-32 px-6 relative overflow-hidden">
+    <section id="contact" className="py-16 px-4 sm:px-6 md:px-8 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#c9a227]/10 to-transparent rounded-full blur-3xl animate-pulse-glow"></div>
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gradient-to-tl from-[#0e3b2c]/15 to-transparent rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '2s' }}></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-20 space-y-4">
+        <div className="text-center mb-12 space-y-4">
           <div className="inline-block">
             <span className="text-[#c9a227] bg-gradient-to-r from-[#c9a227]/10 to-[#0e3b2c]/10 px-5 py-2.5 rounded-full text-sm border border-[#c9a227]/30 shadow-[0_0_20px_rgba(201,162,39,0.15)]">
               Get In Touch
@@ -136,7 +136,7 @@ export function Contact() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8">
           {/* Contact Info - Left Side */}
           <div className="md:col-span-2 space-y-6">
             {contactInfo.map((info, index) => {
@@ -152,7 +152,13 @@ export function Contact() {
                       </div>
                       <div>
                         <h4 className="text-[#efe9d6] mb-1">{info.title}</h4>
-                        <p className="text-[#c9a227] mb-1">{info.content}</p>
+                        <p className="text-[#c9a227] mb-1">
+                          {Array.isArray(info.content)
+                            ? info.content.map((item: string, idx: number) => (
+                              <span key={idx} className="block">{item}</span>
+                            ))
+                            : info.content}
+                        </p>
                         <p className="text-[#efe9d6]/60 text-sm">{info.subtext}</p>
                       </div>
                     </div>
@@ -186,7 +192,10 @@ export function Contact() {
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-100 transition-all duration-500"></div>
 
-              <form onSubmit={handleSubmit} className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-8 md:p-10">
+              <form
+                onSubmit={handleSubmit}
+                className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-4 sm:p-6 md:p-10 flex flex-col gap-4"
+              >
                 {/* Success Message */}
                 {submitSuccess && (
                   <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300">
@@ -198,7 +207,7 @@ export function Contact() {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Error Message */}
                 {submitError && (
                   <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300">
@@ -211,7 +220,7 @@ export function Contact() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
                   {/* Name Field */}
                   <div className="space-y-2">
                     <label htmlFor="name" className="text-[#efe9d6] text-sm block">
@@ -284,7 +293,7 @@ export function Contact() {
                 </div>
 
                 {/* Service Selection */}
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-4 md:mb-6">
                   <label htmlFor="service" className="text-[#efe9d6] text-sm block">
                     Service Interested In *
                   </label>
@@ -308,7 +317,7 @@ export function Contact() {
                 </div>
 
                 {/* Message Field */}
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-4 md:mb-6">
                   <label htmlFor="message" className="text-[#efe9d6] text-sm block">
                     Your Message *
                   </label>
@@ -326,9 +335,9 @@ export function Contact() {
                 </div>
 
                 {/* Submit Button */}
-                <GradientButton 
-                  size="lg" 
-                  className="w-full"
+                <GradientButton
+                  size="lg"
+                  className="w-full md:w-auto"
                   type="submit"
                   disabled={isSubmitting}
                 >
