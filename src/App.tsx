@@ -19,6 +19,8 @@ import { AddTeamPage } from './pages/admin/AddTeamPage';
 import { AdminMessages } from './pages/admin/AdminMessages';
 import { AdminServiceOrders } from './pages/admin/AdminServiceOrders';
 import ScrollToTop from './components/scrollToTop';
+import CookiePolicyPage from './pages/CookiePolicyPage';
+import LegalNoticePage from './pages/LegalNoticePage';
 
 export default function App() {
 
@@ -37,6 +39,8 @@ export default function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+          <Route path="/legal-notice" element={<LegalNoticePage />} />
           <Route path="/order" element={<ServiceOrderPage />} />
 
           {/* Admin Routes - Protected */}

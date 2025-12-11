@@ -24,9 +24,18 @@ export function Footer() {
               <div className="flex items-center gap-2 text-[#efe9d6]/70 text-sm transition-colors cursor-pointer">
                 <Phone className="w-5 h-5 text-[#c9a227]" />
                 <div className='flex flex-col gap-1'>
-                  <a href="tel:+447848101848" className="duration-300 hover:text-[#c9a227]">+44 7848 101848</a>
-                  <a href="tel:+41797265555" className="duration-300 hover:text-[#c9a227]">+41 79 726 55 55</a>
-                  <a href="tel:+16467771766" className="duration-300 hover:text-[#c9a227]">+1 646 777 1766</a>
+                  <a href="tel:+447848101848" className="duration-300 hover:text-[#c9a227] flex items-center gap-2">
+                    +44 7848 101848
+                    <span className="bg-[#c9a227]/20 text-[#c9a227] text-xs px-2 py-0.5 rounded ml-1">UK</span>
+                  </a>
+                  <a href="tel:+41797265555" className="duration-300 hover:text-[#c9a227] flex items-center gap-2">
+                    +41 79 726 55 55
+                    <span className="bg-[#c9a227]/20 text-[#c9a227] text-xs px-2 py-0.5 rounded ml-1">CH</span>
+                  </a>
+                  <a href="tel:+16467771766" className="duration-300 hover:text-[#c9a227] flex items-center gap-2">
+                    +1 646 777 1766
+                    <span className="bg-[#c9a227]/20 text-[#c9a227] text-xs px-2 py-0.5 rounded ml-1">USA</span>
+                  </a>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-[#efe9d6]/70 text-sm transition-colors cursor-pointer">
@@ -77,15 +86,27 @@ export function Footer() {
             <h4 className="text-[#efe9d6] mb-6 bg-gradient-to-r from-[#efe9d6] to-[#c9a227] bg-clip-text">Legal</h4>
             <ul className="space-y-3">
               <li>
-                <a href="/terms" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
-                  <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>
-                  Terms of Service
-                </a>
-              </li>
-              <li>
                 <a href="/privacy" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
                   <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>
                   Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="/cookie-policy" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
+                  <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>
+                  Cookie Policy
+                </a>
+              </li>
+              <li>
+                <a href="/legal-notice" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
+                  <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>
+                  Legal Notice
+                </a>
+              </li>
+              <li>
+                <a href="/terms" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
+                  <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>
+                  Terms &amp; Conditions
                 </a>
               </li>
             </ul>

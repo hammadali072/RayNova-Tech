@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Lottie from "lottie-react";
 import chatIcon from "../../assets/Chatbot.json";
+import chatIcon2 from "../../assets/RobotSaysHi.json";
 import "./Chatbot.css";
 import { db } from "../../firebase";
 import { ref, get } from "firebase/database";
@@ -391,7 +392,7 @@ const Chatbot = () => {
               opacity: animationStep % (textToAnimate.length * 2) < 5 ? 0 : 1
             }}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 py-2 rounded-full shadow-xl font-medium text-sm whitespace-nowrap border border-blue-400/30">
+            <div className="lg:block hidden bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 py-2 rounded-full shadow-xl font-medium text-sm whitespace-nowrap border border-blue-400/30">
               {textToAnimate}
             </div>
             {/* Speech bubble tail */}
@@ -399,14 +400,16 @@ const Chatbot = () => {
           </div>
 
           {/* Icon with pulse effect */}
-          <div className="relative w-24 h-24">
+          <div className="relative icon_otr">
             <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-30"></div>
             <Lottie
-              animationData={chatIcon}
+              animationData={chatIcon2}
               loop={true}
-              className="relative z-10 hover:scale-110 transition-transform duration-300 w-24 h-24"
+              className="icon relative z-10 hover:scale-110 transition-transform duration-300"
             />
           </div>
+
+
         </div>
       )}
 

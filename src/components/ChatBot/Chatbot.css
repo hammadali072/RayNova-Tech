@@ -226,3 +226,19 @@ body.modal-open {
     display: none !important;
   }
 }
+
+
+.icon_otr, .icon {
+  width: 180px;
+  height: 180px;
+}
+@media (max-width: 1024px) {
+  .icon_otr {
+    width: 100px;
+    height: 100px
+  }
+  .icon {
+    width: 96px;
+    height: 96px
+  }
+}
