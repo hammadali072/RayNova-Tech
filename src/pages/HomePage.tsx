@@ -15,17 +15,17 @@ export function HomePage() {
   return (
     <div className="min-h-screen">
       <Header />
-      {/* <Hero />
+      <Hero />
       <About />
       <VisionMission />
       <Services />
-      <WhyChooseUs /> */}
-      {/* <Features /> */}
-      {/* <Process />
+      <WhyChooseUs />
+      <Features />
+      <Process />
       <Blog />
       <CTA />
       <Footer />
-      <Chatbot /> */}
+      <Chatbot />
     </div>
   );
 }

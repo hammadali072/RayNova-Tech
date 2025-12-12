@@ -13,7 +13,7 @@ export function Partners() {
   ];
 
   return (
-    <section className="min-h-screen flex items-center justify-center py-20 px-6 relative overflow-hidden bg-gradient-to-b from-transparent via-[#232323]/20 to-transparent">
+    <section className="min-h-screen flex items-center justify-center py-12 sm:py-16 md:py-20 px-4 sm:px-6 relative overflow-hidden bg-gradient-to-b from-transparent via-[#232323]/20 to-transparent">
       {/* Background */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-[#c9a227]/10 to-[#0e3b2c]/10 rounded-full blur-3xl animate-pulse-glow"></div>
 
@@ -31,13 +31,13 @@ export function Partners() {
               Partners
             </span>
           </h2>
-          <p className="text-[#efe9d6]/70 text-lg max-w-3xl mx-auto">
+          <p className="text-[#efe9d6]/70 text-sm sm:text-base md:text-lg max-w-3xl mx-auto">
             Collaborating with industry leaders to deliver exceptional value and innovation
           </p>
         </div>
 
         {/* Partners Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {partners.map((partner, index) => (
             <div key={index} className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/10 to-[#0e3b2c]/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>

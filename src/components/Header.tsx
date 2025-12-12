@@ -51,7 +51,7 @@ export function Header() {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between backdrop-blur-xl bg-transparent">
         <a href="/">
-          <img className="sm:w-60 h-auto" src={logo} alt="RayNova Tech" />
+          <img className="xl:w-52 md:w-48 w-36 h-auto" src={logo} alt="RayNova Tech" />
         </a>
 
         {/* Desktop Nav: show on lg+ only */}
@@ -119,10 +119,10 @@ export function Header() {
 
         {/* Mobile menu icon: show below lg only */}
         <button
-          className="flex lg:hidden text-[#efe9d6]"
+          className="flex lg:hidden text-[#efe9d6] cursor-pointer border border-[#c9a227]/20 rounded-md p-2 group hover:box-shadow"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileMenuOpen ? <X className="w-6 h-6 duration-300 text-primary group-hover:box-shadow" /> : <Menu className="w-6 h-6 duration-300 hover:text-primary group-hover:box-shadow" />}
         </button>
       </div>
 

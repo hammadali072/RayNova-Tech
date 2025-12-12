@@ -38,10 +38,10 @@ export function Leadership() {
   }, []);
 
   return (
-    <section className="min-h-screen flex items-center justify-center py-20 px-6 relative overflow-hidden">
+    <section className="min-h-screen flex items-center justify-center py-12 sm:py-16 md:py-20 px-4 sm:px-6 relative overflow-hidden">
       {/* Background */}
-      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-gradient-to-r from-[#c9a227]/10 to-transparent rounded-full blur-3xl animate-pulse-glow"></div>
-      <div className="absolute bottom-1/4 right-0 w-[600px] h-[600px] bg-gradient-to-l from-[#0e3b2c]/15 to-transparent rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "2s" }}></div>
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-gradient-to-r from-[#c9a227]/10 to-transparent rounded-full blur-3xl animate-pulse-glow" />
+      <div className="absolute bottom-1/4 right-0 w-[600px] h-[600px] bg-gradient-to-l from-[#0e3b2c]/15 to-transparent rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "2s" }} />
 
       <div className="max-w-7xl mx-auto w-full relative z-10">
         <div className="text-center mb-16 space-y-4">
@@ -56,16 +56,16 @@ export function Leadership() {
             </span>
           </h2>
 
-          <p className="text-[#efe9d6]/70 text-lg max-w-3xl mx-auto">
+          <p className="text-[#efe9d6]/70 text-sm sm:text-base md:text-lg max-w-3xl mx-auto">
             Meet the brilliant minds driving innovation at RayNova Tech
           </p>
         </div>
 
         {/* Team Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {team.map((member) => (
             <div key={member.id} className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500" />
 
               <div className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-3xl overflow-hidden hover:border-[#c9a227]/40 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(201,162,39,0.25)]">
 
@@ -77,7 +77,7 @@ export function Leadership() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#232323] via-transparent to-transparent opacity-60"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#232323] via-transparent to-transparent opacity-60" />
 
                   {/* Social */}
                   <div className="absolute inset-0 bg-[#0f0f0f]/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-4">

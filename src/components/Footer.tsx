@@ -5,11 +5,11 @@ export function Footer() {
   return (
     <footer id="contact" className="bg-gradient-to-b from-[#232323]/50 to-[#232323] backdrop-blur-xl pt-16 pb-8 px-6 border-t border-[#c9a227]/10">
       <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-4 gap-12 mb-12">
+        <div className="grid lg:grid-cols-4 sm:grid-cols-2 gap-12 mb-12">
           {/* Company Info */}
           <div className="space-y-4">
             <a href="/" className="inline-block">
-              <img className="w-60" src={logo} alt="RayNova Tech" />
+              <img className="xl:w-52 md:w-48 w-40 h-auto" src={logo} alt="RayNova Tech" />
             </a>
 
             <p className="text-[#efe9d6]/70 text-sm leading-relaxed">
@@ -49,7 +49,7 @@ export function Footer() {
 
           <div>
             <h4 className="text-[#efe9d6] mb-6 bg-gradient-to-r from-[#efe9d6] to-[#c9a227] bg-clip-text">Quick Links</h4>
-            <ul className="space-y-3">
+            <ul className="md:space-y-3 space-y-1.5">
               <li>
                 <a href="/" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
                   <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>
@@ -84,7 +84,7 @@ export function Footer() {
           </div>
           <div>
             <h4 className="text-[#efe9d6] mb-6 bg-gradient-to-r from-[#efe9d6] to-[#c9a227] bg-clip-text">Legal</h4>
-            <ul className="space-y-3">
+            <ul className="md:space-y-3 space-y-1.5">
               <li>
                 <a href="/privacy" className="text-[#efe9d6]/70 hover:text-[#c9a227] transition-all duration-300 text-sm inline-flex items-center gap-2 group">
                   <span className="w-0 h-px bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] group-hover:w-4 transition-all duration-300"></span>

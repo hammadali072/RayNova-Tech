@@ -17,9 +17,9 @@ export function GradientButton({
   size = 'md'
 }: GradientButtonProps) {
   const sizeClasses = {
-    sm: 'px-6 py-2.5 text-sm',
-    md: 'px-10 py-4 text-base',
-    lg: 'px-12 py-5 text-lg'
+    sm: 'px-4 py-3 text-xs sm:px-5 sm:py-2.5 sm:text-sm',
+    md: 'px-6 py-2.5 text-sm sm:px-8 sm:py-3 sm:text-base md:px-10 md:py-4',
+    lg: 'px-8 py-3 text-sm sm:px-10 sm:py-4 sm:text-base md:px-12 md:py-5 md:text-lg'
   };
 
   if (variant === 'outline') {

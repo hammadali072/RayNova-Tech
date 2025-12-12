@@ -228,17 +228,50 @@ body.modal-open {
 }
 
 
-.icon_otr, .icon {
-  width: 180px;
-  height: 180px;
+/* Enhanced icon sizing - Responsive */
+.icon_otr {
+  width: 64px;
+  height: 64px;
 }
-@media (max-width: 1024px) {
+
+.icon {
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 640px) {
   .icon_otr {
-    width: 100px;
-    height: 100px
+    width: 80px;
+    height: 80px;
   }
-  .icon {
+}
+
+@media (min-width: 1024px) {
+  .icon_otr {
     width: 96px;
-    height: 96px
+    height: 96px;
   }
+}
+
+/* Custom scrollbar for chat area */
+.chat-container::-webkit-scrollbar,
+div[ref="chatContainerRef"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track,
+div[ref="chatContainerRef"]::-webkit-scrollbar-track {
+  background: rgba(35, 35, 35, 0.5);
+  border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb,
+div[ref="chatContainerRef"]::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #c9a227, #d4b13f);
+  border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover,
+div[ref="chatContainerRef"]::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #d4b13f, #c9a227);
 }

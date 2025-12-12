@@ -100,14 +100,16 @@ export function Contact() {
         {
             icon: Phone,
             title: 'Call Us',
-            content: ['+44 7848 101848', '+41 79 726 55 55', '+1 646 777 1766'],
+            content: [
+                { number: '+44 7848 101848', tag: 'UK' },
+                { number: '+41 79 726 55 55', tag: 'CH' },
+                { number: '+1 646 777 1766', tag: 'USA' }],
             subtext: 'Mon-Fri from 8am to 6pm'
         },
         {
             icon: MapPin,
             title: 'Visit Us',
-            content: 'London, UK',
-            subtext: '11-12 Old Bond Street, Mayfair London W1S 4PN'
+            content: '11-12 Old Bond Street, Mayfair London W1S 4PN, United Kingdom',
         }
     ];
 
@@ -132,7 +134,7 @@ export function Contact() {
                                 Conversation
                             </span>
                         </h2>
-                        <p className="text-[#efe9d6]/70 text-lg max-w-3xl mx-auto">
+                        <p className="text-[#efe9d6]/70 md:text-lg text-base max-w-3xl mx-auto">
                             Ready to transform your business? Reach out to us and let's discuss how we can help you achieve your goals
                         </p>
                     </div>
@@ -144,17 +146,28 @@ export function Contact() {
                                 const Icon = info.icon;
                                 return (
                                     <div key={index} className="group relative">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/10 to-[#0e3b2c]/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/10 to-[#0e3b2c]/10 md:rounded-2xl rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
 
-                                        <div className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-6 hover:border-[#c9a227]/30 transition-all duration-300 hover:shadow-[0_10px_40px_rgba(201,162,39,0.15)]">
+                                        <div className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 md:rounded-2xl rounded-xl md:p-6 p-4 hover:border-[#c9a227]/30 transition-all duration-300 hover:shadow-[0_10px_40px_rgba(201,162,39,0.15)]">
                                             <div className="flex items-start gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                                                    <Icon className="w-6 h-6 text-[#c9a227]" />
+                                                <div className="md:w-12 w-10 md:h-12 h-10 md:rounded-xl rounded-lg bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
+                                                    <Icon className="md:w-6 w-5 md:h-6 h-5 text-[#c9a227]" />
                                                 </div>
                                                 <div>
                                                     <h4 className="text-[#efe9d6] mb-1">{info.title}</h4>
-                                                    <p className="text-[#c9a227] mb-1">{info.content}</p>
-                                                    <p className="text-[#efe9d6]/60 text-sm">{info.subtext}</p>
+                                                    <div className='flex flex-col gap-1'>
+                                                        {Array.isArray(info.content) ? (
+                                                            info.content.map((item: { number: string; tag: string }, subIndex: number) => (
+                                                                <div key={subIndex} className="flex items-center gap-1.5">
+                                                                    <p className="text-[#c9a227] mb-1">{item.number}</p>
+                                                                    <span className="bg-[#c9a227]/20 text-[#c9a227] text-xs px-2 py-0.5 rounded ml-1">{item.tag}</span>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <p className="text-[#c9a227] mb-1">{typeof info.content === 'string' ? info.content : ''}</p>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[#efe9d6]/60 text-sm">{info?.subtext}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -163,7 +176,7 @@ export function Contact() {
                             })}
 
                             {/* Additional Info Card */}
-                            <div className="bg-gradient-to-br from-[#c9a227]/10 to-[#0e3b2c]/10 backdrop-blur-xl border border-[#c9a227]/20 rounded-2xl p-6">
+                            <div className="bg-gradient-to-br from-[#c9a227]/10 to-[#0e3b2c]/10 backdrop-blur-xl border border-[#c9a227]/20 md:rounded-2xl rounded-xl md:p-6 p-4">
                                 <h4 className="text-[#efe9d6] mb-3">Working Hours</h4>
                                 <div className="space-y-2 text-[#efe9d6]/70 text-sm">
                                     <div className="flex justify-between">
@@ -185,9 +198,9 @@ export function Contact() {
                         {/* Contact Form - Right Side */}
                         <div className="md:col-span-3">
                             <div className="relative group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-100 transition-all duration-500"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 md:rounded-3xl rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-all duration-500" />
 
-                                <form onSubmit={handleSubmit} className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl p-8 md:p-10">
+                                <form onSubmit={handleSubmit} className="relative bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/20 md:rounded-3xl rounded-xl md:p-10 sm:p-8 p-6">
                                     {/* Success Message */}
                                     {submitSuccess && (
                                         <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300">
@@ -214,7 +227,7 @@ export function Contact() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         {/* Name Field */}
-                                        <div className="space-y-2">
+                                        <div className="md:space-y-2 space-y-1">
                                             <label htmlFor="name" className="text-[#efe9d6] text-sm block">
                                                 Full Name *
                                             </label>
@@ -225,7 +238,7 @@ export function Contact() {
                                                 value={formData.name}
                                                 onChange={handleChange}
                                                 required
-                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 md:rounded-xl rounded-md px-4 py-3 md:text-base text-sm text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                                                 placeholder="John Doe"
                                                 disabled={isSubmitting}
                                             />
@@ -243,7 +256,7 @@ export function Contact() {
                                                 value={formData.email}
                                                 onChange={handleChange}
                                                 required
-                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 md:rounded-xl rounded-md px-4 py-3 md:text-base text-sm text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                                                 placeholder="john@example.com"
                                                 disabled={isSubmitting}
                                             />
@@ -260,7 +273,7 @@ export function Contact() {
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleChange}
-                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 md:rounded-xl rounded-md px-4 py-3 md:text-base text-sm text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                                                 placeholder="+1 (555) 000-0000"
                                                 disabled={isSubmitting}
                                             />
@@ -277,7 +290,7 @@ export function Contact() {
                                                 name="company"
                                                 value={formData.company}
                                                 onChange={handleChange}
-                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                                                className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 md:rounded-xl rounded-md px-4 py-3 md:text-base text-sm text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                                                 placeholder="Your Company"
                                                 disabled={isSubmitting}
                                             />
@@ -295,7 +308,7 @@ export function Contact() {
                                             value={formData.service}
                                             onChange={handleChange}
                                             required
-                                            className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
+                                            className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 md:rounded-xl rounded-md px-4 py-3 md:text-base text-sm text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
                                             disabled={isSubmitting}
                                         >
                                             <option value="">Select a service</option>
@@ -320,20 +333,23 @@ export function Contact() {
                                             onChange={handleChange}
                                             required
                                             rows={6}
-                                            className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 resize-none"
+                                            className="w-full bg-[#0f0f0f]/60 border border-[#c9a227]/20 md:rounded-xl rounded-md px-4 py-3 md:text-base text-sm text-[#efe9d6] placeholder-[#efe9d6]/40 focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 resize-none"
                                             placeholder="Tell us about your project..."
                                             disabled={isSubmitting}
                                         />
                                     </div>
 
                                     {/* Submit Button */}
-                                    <GradientButton
-                                        size="lg"
-                                        className="w-full"
+                                    <button
                                         type="submit"
                                         disabled={isSubmitting}
+                                        className="w-full relative px-8 py-3 text-sm sm:px-10 sm:py-4 sm:text-base md:px-12 md:py-5 md:text-lg rounded-full hover:shadow-[0_0_40px_rgba(201,162,39,0.7)] transition-all duration-300 transform hover:scale-105 group overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #c9a227 0%, #d4b13f 25%, #0e3b2c 50%, #1a4d38 75%, #c9a227 100%)',
+                                            backgroundSize: '200% 200%',
+                                        }}
                                     >
-                                        <span className="flex items-center justify-center gap-2">
+                                        <span className="relative z-10 text-[#efe9d6] flex items-center justify-center gap-2">
                                             {isSubmitting ? (
                                                 <>
                                                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -349,7 +365,14 @@ export function Contact() {
                                                 </>
                                             )}
                                         </span>
-                                    </GradientButton>
+                                        <div
+                                            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #0e3b2c 0%, #1a4d38 25%, #c9a227 50%, #d4b13f 75%, #0e3b2c 100%)',
+                                                backgroundSize: '200% 200%',
+                                            }}
+                                        />
+                                    </button>
 
                                     <p className="text-[#efe9d6]/50 text-xs text-center mt-4">
                                         By submitting this form, you agree to our privacy policy and terms of service.
@@ -360,7 +383,7 @@ export function Contact() {
                     </div>
                 </div>
             </section>
-            <iframe className='w-full h-[600px]' src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2483.2443265080365!2d-0.1430446!3d51.5087334!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487604d61bc2ffff%3A0x241515a3a056e276!2s11-12%20Old%20Bond%20St%2C%20London%20W1S%204PN%2C%20UK!5e0!3m2!1sen!2s!4v1765455481023!5m2!1sen!2s" loading="lazy" referrerpolicy="no-referrer-when-downgrade" />
+            <iframe className='w-full lg:h-[600px] md:h-[400px] h-[300px]' src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2483.2443265080365!2d-0.1430446!3d51.5087334!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487604d61bc2ffff%3A0x241515a3a056e276!2s11-12%20Old%20Bond%20St%2C%20London%20W1S%204PN%2C%20UK!5e0!3m2!1sen!2s!4v1765455481023!5m2!1sen!2s" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
         </>
     );
 }
