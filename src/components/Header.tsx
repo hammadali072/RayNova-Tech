@@ -31,8 +31,6 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // No custom resize logic needed; Tailwind handles breakpoints
-
   const handleLogout = () => {
     logout();
     setIsUserMenuOpen(false);
@@ -53,32 +51,30 @@ export function Header() {
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between backdrop-blur-xl bg-transparent">
         <a href="/">
-          <img className="w-60" src={logo} alt="RayNova Tech" />
+          <img className="sm:w-60 h-auto" src={logo} alt="RayNova Tech" />
         </a>
 
         {/* Desktop Nav: show on lg+ only */}
-        <nav className='lg:block hidden'>
-          <div className="items-center gap-8 flex">
-            {menuLinks.map(link => {
-              const isActive = location.pathname === link.path;
-              return (
-                <a
-                  key={link.path}
-                  href={link.path}
-                  className={`relative ${isActive ? 'text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors group`}
-                >
-                  {link.text}
-                  <span
-                    className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
-                  ></span>
-                </a>
-              );
-            })}
-          </div>
+        <nav className="hidden lg:flex items-center gap-8">
+          {menuLinks.map(link => {
+            const isActive = location.pathname === link.path;
+            return (
+              <a
+                key={link.path}
+                href={link.path}
+                className={`relative ${isActive ? 'text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors group`}
+              >
+                {link.text}
+                <span
+                  className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
+                ></span>
+              </a>
+            );
+          })}
         </nav>
 
         {/* User/Login: show on lg+ only */}
-        <div className='lg:block hidden'>
+        <div className='hidden lg:block'>
           <div className="items-center gap-4 flex">
             {isAuthenticated && currentUser ? (
               <div className="relative">
