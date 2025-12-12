@@ -10,26 +10,73 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false); // NEW STATE
+  const [activeSection, setActiveSection] = useState<string>('');
   // Remove showDesktopMenu state, use Tailwind breakpoints instead
   const { currentUser, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuLinks = [
-    { text: "Home", path: "/" },
-    { text: "About", path: "/about" },
-    { text: "Services", path: "/services" },
-    { text: "Blog", path: "/blog" },
-    { text: "Contact", path: "/contact" },
+    { text: "Home", path: "/", sectionId: "" },
+    { text: "About", path: "/about", sectionId: "about" },
+    { text: "Services", path: "/services", sectionId: "services" },
+    { text: "Blog", path: "/blog", sectionId: "blog" },
+    { text: "Contact", path: "/contact", sectionId: "contact" },
   ];
 
+  // Scroll spy functionality to detect active section
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+
+      // Only run scroll spy on homepage
+      if (location.pathname === '/') {
+        const sections = ['about', 'services', 'blog', 'contact'];
+        const scrollPosition = window.scrollY + 150; // Offset for header height
+
+        // Find the section currently in view
+        let currentSection = '';
+        for (const sectionId of sections) {
+          const element = document.getElementById(sectionId);
+          if (element) {
+            const offsetTop = element.offsetTop;
+            const offsetHeight = element.offsetHeight;
+            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+              currentSection = sectionId;
+              break;
+            }
+          }
+        }
+
+        // If we're at the top, clear active section (Home is active)
+        if (window.scrollY < 100) {
+          setActiveSection('');
+        } else if (currentSection) {
+          setActiveSection(currentSection);
+        } else {
+          // Check if we've scrolled past all sections
+          const lastSection = document.getElementById('contact');
+          if (lastSection && scrollPosition >= lastSection.offsetTop + lastSection.offsetHeight - 200) {
+            setActiveSection('contact');
+          }
+        }
+      } else {
+        // On other pages, set active section based on pathname
+        const pathToSection: Record<string, string> = {
+          '/about': 'about',
+          '/services': 'services',
+          '/blog': 'blog',
+          '/contact': 'contact',
+        };
+        setActiveSection(pathToSection[location.pathname] || '');
+      }
     };
+
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Call once to set initial state
+
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -57,16 +104,24 @@ export function Header() {
         {/* Desktop Nav: show on lg+ only */}
         <nav className="hidden lg:flex items-center gap-8">
           {menuLinks.map(link => {
-            const isActive = location.pathname === link.path;
+            // Check if link is active based on pathname (full page match)
+            const isPathActive = location.pathname === link.path;
+            // Check if section is active (only on homepage when scrolling)
+            const isSectionActive = location.pathname === '/' && link.sectionId && activeSection === link.sectionId;
+            // Full active = path match (underline + color), Section active = only color
+            const isFullActive = isPathActive;
+            const isPartialActive = isSectionActive && !isPathActive;
+
             return (
               <a
                 key={link.path}
-                href={link.path}
-                className={`relative ${isActive ? 'text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors group`}
+                href={link.path === '/' && link.sectionId ? `/#${link.sectionId}` : link.path}
+                className={`relative ${isFullActive || isPartialActive ? 'text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors group`}
               >
                 {link.text}
+                {/* Underline only shows for full page match, not for section scroll */}
                 <span
-                  className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
+                  className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isFullActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
                 ></span>
               </a>
             );
@@ -130,19 +185,27 @@ export function Header() {
       <div className={`bg-[#181818]/95 backdrop-blur-xl bg-transparent border-t border-[#c9a227]/10 duration-300 ${isMobileMenuOpen ? "block" : "hidden"}`}>
         <nav className="flex flex-col px-6 py-4 gap-4">
           {menuLinks.map(link => {
-            const isActive = location.pathname === link.path;
+            // Check if link is active based on pathname (full page match)
+            const isPathActive = location.pathname === link.path;
+            // Check if section is active (only on homepage when scrolling)
+            const isSectionActive = location.pathname === '/' && link.sectionId && activeSection === link.sectionId;
+            // Full active = path match (underline + color), Section active = only color
+            const isFullActive = isPathActive;
+            const isPartialActive = isSectionActive && !isPathActive;
+
             return (
               <a
                 key={link.path}
-                href={link.path}
-                className={`relative inline-block w-fit ${isActive ? '!text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors`}
+                href={link.path === '/' && link.sectionId ? `/#${link.sectionId}` : link.path}
+                className={`relative inline-block w-fit ${isFullActive || isPartialActive ? '!text-[#c9a227]' : 'text-[#efe9d6] hover:text-[#c9a227]'} transition-colors`}
                 style={{
                   width: 'fit-content'
                 }}
               >
                 {link.text}
+                {/* Underline only shows for full page match, not for section scroll */}
                 <span
-                  className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`}
+                  className={`absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-[#c9a227] to-[#0e3b2c] transition-all duration-300 ${isFullActive ? 'w-full' : 'w-0'}`}
                 ></span>
               </a>
             );

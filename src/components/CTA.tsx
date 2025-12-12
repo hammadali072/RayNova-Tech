@@ -3,7 +3,7 @@ import { GradientButton } from './GradientButton';
 
 export function CTA() {
   return (
-    <section className="py-12 sm:py-16 md:py-24 lg:py-32 px-4 sm:px-6 relative overflow-hidden">
+    <section id="contact" className="py-12 sm:py-16 md:py-24 lg:py-32 px-4 sm:px-6 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-[#c9a227]/20 via-[#d4b13f]/10 to-[#0e3b2c]/20 rounded-full blur-3xl animate-pulse-glow" />
