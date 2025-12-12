@@ -10,7 +10,7 @@ export function AboutPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <PageBanner 
+      <PageBanner
         title="About Us"
         subtitle="Discover the story behind RayNova Tech and the passionate team driving AI innovation forward"
         breadcrumbs={[

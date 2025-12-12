@@ -7,7 +7,7 @@ export function BlogPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <PageBanner 
+      <PageBanner
         title="Our Blog"
         subtitle="Stay updated with the latest insights, trends, and innovations in AI and web development"
         breadcrumbs={[

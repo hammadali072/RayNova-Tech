@@ -21,11 +21,25 @@ import { AdminServiceOrders } from './pages/admin/AdminServiceOrders';
 import ScrollToTop from './components/scrollToTop';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import LegalNoticePage from './pages/LegalNoticePage';
+import Chatbot from './components/ChatBot/Chatbot';
+
+// Component to conditionally render chatbot based on route
+function ConditionalChatbot() {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  if (isAdminPage) {
+    return null;
+  }
+
+  return <Chatbot />;
+}
 
 export default function App() {
 
   return (
     <AuthProvider>
+
       <Router>
         <ScrollToTop />
         <Routes>
@@ -51,6 +65,7 @@ export default function App() {
           <Route path="/admin/messages" element={<RequireAdmin><AdminMessages /></RequireAdmin>} />
           <Route path="/admin/service-orders" element={<RequireAdmin><AdminServiceOrders /></RequireAdmin>} />
         </Routes>
+        <ConditionalChatbot />
       </Router>
     </AuthProvider>
   );
