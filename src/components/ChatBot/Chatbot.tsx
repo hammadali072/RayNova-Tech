@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Lottie from "lottie-react";
-import chatIcon from "../../assets/Chatbot.json";
+
 import chatIcon2 from "../../assets/RobotSaysHi.json";
 import "./Chatbot.css";
 import { db } from "../../firebase";
@@ -24,7 +24,7 @@ const Chatbot = () => {
   const messagesEndRef = useRef(null);
 
   const textToAnimate = "Hi! Can I help you?";
-  const API_KEY = "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";
+  const API_KEY = "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";
   const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
   // Contact Information
@@ -247,8 +247,19 @@ const Chatbot = () => {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
+        // If API fails, return a friendly contact message
+        return `
+          <div style="padding: 15px; background: rgba(201, 162, 39, 0.1); border-radius: 10px; border-left: 4px solid #c9a227;">
+            <h3 style="color: #efe9d6; margin-bottom: 10px;">🤖 I'm here to help you</h3>
+            <p style="color: #efe9d6; margin-bottom: 15px;">I apologize, but I'm  unable to process your request .</p>
+            <div style="background: rgba(201, 162, 39, 0.2); padding: 12px; border-radius: 8px; margin-top: 10px;">
+              <p style="color: #efe9d6; font-weight: bold; margin-bottom: 8px;">📞 Please contact over teams:</p>
+              <p style="color: #efe9d6; margin-bottom: 5px;">📧 Email: <strong>contact@raynova.tech</strong></p>
+              <p style="color: #efe9d6; margin-bottom: 5px;">📱 Phone: <strong>+44 7848 101848</strong></p>
+              <p style="color: #efe9d6; margin-top: 10px;">We'll be happy to assist you with your query!</p>
+            </div>
+          </div>
+        `;
       }
 
       const data = await response.json();
@@ -256,38 +267,32 @@ const Chatbot = () => {
       if (data.choices && data.choices[0] && data.choices[0].message) {
         return data.choices[0].message.content.replace(/\n/g, '<br>');
       } else {
-        return "I received an unexpected response format. Please try again.";
+        return `
+          <div style="padding: 15px; background: rgba(201, 162, 39, 0.1); border-radius: 10px; border-left: 4px solid #c9a227;">
+            <p style="color: #efe9d6; margin-bottom: 10px;">I received an unexpected response from our system.</p>
+            <p style="color: #efe9d6;">For immediate assistance, please contact us at <strong>contact@raynova.tech</strong> or call <strong>+44 7848 101848</strong>.</p>
+          </div>
+        `;
       }
 
     } catch (error) {
       console.error("Error calling Groq API:", error);
-
-      if (error.message.includes('401')) {
-        return "Authentication failed. Please check if the API key is valid and not expired.";
-      } else if (error.message.includes('429')) {
-        return "Rate limit exceeded. Please wait a moment before trying again.";
-      } else if (error.message.includes('network') || error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
-        return "Network error. Please check your internet connection.";
-      } else {
-        return `I apologize, but I'm having trouble connecting: ${error.message}`;
-      }
+      
+      // For any error, return a friendly contact message
+      return `
+        <div style="padding: 15px; background: rgba(201, 162, 39, 0.1); border-radius: 10px; border-left: 4px solid #c9a227;">
+          <h3 style="color: #efe9d6; margin-bottom: 10px;">🔧 Temporary Service Interruption</h3>
+          <p style="color: #efe9d6; margin-bottom: 15px;">I'm currently experiencing some technical difficulties. While we work to resolve this, you can:</p>
+          <div style="background: rgba(201, 162, 39, 0.2); padding: 12px; border-radius: 8px;">
+            <p style="color: #efe9d6; margin-bottom: 8px;"><strong>1. Browse our services</strong> - Ask about "services"</p>
+            <p style="color: #efe9d6; margin-bottom: 8px;"><strong>2. Learn about our process</strong> - Ask about "process"</p>
+            <p style="color: #efe9d6; margin-bottom: 8px;"><strong>3. Contact us directly</strong> - Ask about "contact information"</p>
+            <p style="color: #efe9d6; margin-top: 10px; font-weight: bold;">📞 Or reach us at: contact@raynova.tech</p>
+          </div>
+        </div>
+      `;
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Test API connection
-  const testGroqAPI = async () => {
-    try {
-      const testResponse = await fetch('https://api.groq.com/openai/v1/models', {
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-        }
-      });
-      return testResponse.ok;
-    } catch (error) {
-      console.error("Test failed:", error);
-      return false;
     }
   };
 
@@ -347,13 +352,11 @@ const Chatbot = () => {
       return;
     }
 
-    // Test API connection first
-    const isApiWorking = await testGroqAPI();
-
-    if (!isApiWorking) {
-      setMessages(prev => [...prev, {
-        text: "⚠️ API Connection Test Failed. Please check: 1) API Key validity 2) Internet connection 3) Browser console for errors",
-        sender: "bot"
+    // Check for greeting
+    if (userMessage.includes('hello') || userMessage.includes('hi') || userMessage.includes('hey')) {
+      setMessages(prev => [...prev, { 
+        text: "Hello! 👋 I'm your RayNova Tech Assistant. How can I help you today? You can ask about our services, process, or contact information!", 
+        sender: "bot" 
       }]);
       setLoading(false);
       return;
@@ -593,6 +596,5 @@ const Chatbot = () => {
     </>
   );
 };
-
 
 export default Chatbot;
