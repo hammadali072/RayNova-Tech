@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
-import { getDatabase, ref, onValue, update, remove } from 'firebase/database';
-import { Download, ClipboardList, Search, Filter, User, Mail, Phone, Calendar, DollarSign, Clock, Trash2, Edit2, Eye, CheckCircle, XCircle, RefreshCw, ExternalLink, Building, FileText, Link } from 'lucide-react';
+import { Download, ClipboardList, Search, Filter, User, Mail, Phone, Calendar, DollarSign, Clock, Trash2, Edit2, Eye, CheckCircle, XCircle, RefreshCw, ExternalLink, Building, FileText, Link, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ServiceOrder {
   id: string;
@@ -16,12 +27,13 @@ interface ServiceOrder {
   projectLink: string;
   timeline: string;
   budget: number;
-  status: 'pending' | 'review' | 'quoted' | 'accepted' | 'in-progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'review' | 'quoted' | 'accepted' | 'in-progress' | 'completed' | 'cancelled' | 'rejected';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   assignedTo: string | null;
   createdAt: string;
   updatedAt: string;
   fileName: string | null;
+  fileData: string | null;
   fileSize: number | null;
   fileType: string | null;
   source: string;
@@ -36,88 +48,101 @@ export function AdminServiceOrders() {
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
   const [showStatusDropdown, setShowStatusDropdown] = useState<string | null>(null);
+  // Action Modal State (Accept/Reject)
+  const [actionModal, setActionModal] = useState<{
+    isOpen: boolean;
+    type: 'accept' | 'reject';
+    orderId: string | null;
+    message: string;
+  }>({
+    isOpen: false,
+    type: 'accept',
+    orderId: null,
+    message: ''
+  });
 
-  // Fetch orders from Firebase
-  useEffect(() => {
-    const db = getDatabase();
-    const ordersRef = ref(db, 'service-orders');
+  // Notification State removed in favor of Sonner
 
-    const unsubscribe = onValue(ordersRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Convert object to array and sort by date (newest first)
-        const ordersList = Object.entries(data).map(([id, order]: [string, any]) => ({
-          id,
-          ...order
-        })).sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-        setOrders(ordersList);
-      } else {
-        setOrders([]);
-      }
+  const { currentUser } = useAuth();
+  const API_URL = 'http://localhost:5000/api/orders';
+
+  // Fetch orders from API
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const token = currentUser?.token;
+      if (!token) return;
+
+      const response = await fetch(API_URL, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
       setLoading(false);
-    });
+    }
+  };
 
-    return () => unsubscribe();
-  }, []);
+  useEffect(() => {
+    fetchOrders();
+  }, [currentUser]);
 
   // Update order status
-  const updateStatus = async (orderId: string, newStatus: ServiceOrder['status']) => {
+  const updateStatus = async (orderId: string, newStatus: ServiceOrder['status'], extraData?: any) => {
     setUpdatingIds(prev => [...prev, orderId]);
     try {
-      const db = getDatabase();
-      const orderRef = ref(db, `service-orders/${orderId}`);
-      await update(orderRef, {
-        status: newStatus,
-        updatedAt: new Date().toISOString()
+      const token = currentUser?.token;
+      const response = await fetch(`${API_URL}/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          updatedAt: new Date().toISOString(),
+          ...extraData
+        })
       });
-      setShowStatusDropdown(null); // Close dropdown after update
-    } catch (error) {
+
+      if (!response.ok) throw new Error('Failed to update status');
+
+      // Update local state
+      setOrders(prev => prev.map(order => 
+        order.id === orderId 
+          ? { ...order, status: newStatus, updatedAt: new Date().toISOString() } 
+          : order
+      ));
+      
+      if (selected?.id === orderId) {
+        setSelected(prev => prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : null);
+      }
+
+      setShowStatusDropdown(null);
+    } catch (error: any) {
       console.error('Error updating order status:', error);
+      toast.error(`Failed to update status: ${error.message || 'Unknown error'}`);
     } finally {
       setUpdatingIds(prev => prev.filter(id => id !== orderId));
     }
   };
 
   // Delete order permanently
-  const deleteOrder = async (orderId: string, orderTitle: string) => {
-    if (window.confirm(`Are you sure you want to PERMANENTLY delete order "${orderTitle}"? This action cannot be undone.`)) {
-      setDeletingIds(prev => [...prev, orderId]);
-      try {
-        const db = getDatabase();
-        const orderRef = ref(db, `service-orders/${orderId}`);
-        await remove(orderRef);
 
-        // Close modal if open
-        if (selected?.id === orderId) {
-          setSelected(null);
-        }
-      } catch (error) {
-        console.error('Error deleting order:', error);
-        alert('Failed to delete order. Please try again.');
-      } finally {
-        setDeletingIds(prev => prev.filter(id => id !== orderId));
-      }
-    }
-  };
 
   // Archive order (soft delete)
   const archiveOrder = async (orderId: string) => {
-    setUpdatingIds(prev => [...prev, orderId]);
-    try {
-      const db = getDatabase();
-      const orderRef = ref(db, `service-orders/${orderId}`);
-      await update(orderRef, {
-        status: 'cancelled',
-        updatedAt: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error archiving order:', error);
-    } finally {
-      setUpdatingIds(prev => prev.filter(id => id !== orderId));
-    }
+    await updateStatus(orderId, 'cancelled');
   };
 
   // Filter orders
@@ -229,6 +254,86 @@ export function AdminServiceOrders() {
     { value: 'cancelled', label: 'Cancelled' },
   ];
 
+
+  const getDefaultMessage = (order: ServiceOrder, type: 'accept' | 'reject') => {
+    if (type === 'reject') {
+      return `Dear ${order.fullName},
+
+Thank you for your interest in RayNova Tech services.
+
+We have reviewed your project request "${order.projectTitle}" and unfortunately, we are unable to accept it at this time.
+
+This could be due to current capacity constraints or because the project requirements fall outside our core service offerings.
+
+We appreciate you considering us and wish you the best with your project.
+
+Sincerely,
+The RayNova Tech Team`;
+    } else {
+      return `Dear ${order.fullName},
+
+We are pleased to inform you that your project request "${order.projectTitle}" has been accepted!
+
+Our team is excited to work with you. We will be in touch shortly with the next steps, including a detailed timeline and onboarding information.
+
+If you have any immediate questions, please don't hesitate to reply to this email.
+
+Sincerely,
+The RayNova Tech Team`;
+    }
+  };
+
+  // Delete Order
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    setIsDeleting(true);
+    try {
+      const token = currentUser?.token;
+      if (!token) return;
+
+      const response = await fetch(`${API_URL}/${deleteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to delete order');
+      
+      setOrders(orders.filter(order => order.id !== deleteId));
+      if (selected?.id === deleteId) setSelected(null);
+      
+      toast.success('Order deleted successfully');
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Failed to delete order');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
+    }
+  };
+
+  const openActionModal = (order: ServiceOrder, type: 'accept' | 'reject') => {
+    setActionModal({
+      isOpen: true,
+      type,
+      orderId: order.id,
+      message: getDefaultMessage(order, type)
+    });
+  };
+
+  const handleActionConfirm = async () => {
+    if (!actionModal.orderId) return;
+    
+    const status = actionModal.type === 'accept' ? 'accepted' : 'rejected';
+    
+    await updateStatus(actionModal.orderId, status, { emailMessage: actionModal.message });
+    
+    setActionModal(prev => ({ ...prev, isOpen: false }));
+    toast.success(`Order ${status} and email sent successfully!`);
+  };
+
   if (loading) {
     return (
       <AdminLayout activePage="orders">
@@ -302,14 +407,9 @@ export function AdminServiceOrders() {
             onChange={e => setFilter(e.target.value)}
             className="bg-[#232323]/40 border border-[#c9a227]/20 rounded-xl px-4 py-3 text-[#efe9d6] focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300"
           >
-            <option value="all">All Orders</option>
-            <option value="pending">Pending Only</option>
-            <option value="review">Under Review</option>
-            <option value="quoted">Quoted</option>
-            <option value="accepted">Accepted</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="all">All Status</option>
+            <option value="accepted">Accept</option>
+            <option value="rejected">Reject</option>
           </select>
         </div>
 
@@ -440,17 +540,12 @@ export function AdminServiceOrders() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteOrder(order.id, order.projectTitle);
+                              setDeleteId(order.id);
                             }}
-                            disabled={deletingIds.includes(order.id)}
                             className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete Order"
                           >
-                            {deletingIds.includes(order.id) ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
+                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -471,7 +566,7 @@ export function AdminServiceOrders() {
 
         {/* Order Detail Modal */}
         {selected && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Modal overlay */}
             <div
               className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -479,7 +574,7 @@ export function AdminServiceOrders() {
             />
             {/* Modal content */}
             <div
-              className="relative bg-[#232323] backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl w-full max-w-4xl mx-auto overflow-y-scroll p-8"
+              className="relative bg-[#232323] backdrop-blur-xl border border-[#c9a227]/20 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-6">
@@ -660,7 +755,18 @@ export function AdminServiceOrders() {
                         <button
                           className="flex items-center gap-2 px-4 py-2 bg-[#c9a227]/20 border border-[#c9a227]/30 rounded-lg text-[#c9a227] hover:bg-[#c9a227]/30 transition-all"
                           title="Download File"
-                          onClick={() => alert('File download requires Firebase Storage setup')}
+                          onClick={() => {
+                            if (selected.fileData) {
+                              const link = document.createElement('a');
+                              link.href = selected.fileData;
+                              link.download = selected.fileName || 'download';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            } else {
+                              toast.error('File data not found');
+                            }
+                          }}
                         >
                           <Download className="w-4 h-4" />
                           Download
@@ -689,74 +795,125 @@ export function AdminServiceOrders() {
                   </div>
                 </div>
 
-                {/* Status Update Section */}
-                <div className="space-y-2">
-                  <label className="text-[#efe9d6]/60 text-sm">Update Status</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {statusOptions.map(option => (
-                      <button
-                        key={option.value}
-                        onClick={() => updateStatus(selected.id, option.value)}
-                        disabled={updatingIds.includes(selected.id) || selected.status === option.value}
-                        className={`p-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${selected.status === option.value
-                          ? `bg-opacity-30 ${getStatusColor(option.value)}`
-                          : 'bg-[#0f0f0f]/40 border-[#c9a227]/10 text-[#efe9d6] hover:bg-[#c9a227]/10'
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        {getStatusIcon(option.value)}
-                        {option.label}
-                        {updatingIds.includes(selected.id) && <RefreshCw className="w-4 h-4 animate-spin" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Action Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-[#c9a227]/10">
                   <button
-                    onClick={() => {
-                      updateStatus(selected.id, 'in-progress');
-                    }}
-                    disabled={updatingIds.includes(selected.id) || deletingIds.includes(selected.id) || selected.status === 'in-progress'}
-                    className="bg-[#c9a227]/20 border border-[#c9a227]/30 text-[#c9a227] font-semibold py-3 px-4 rounded-xl hover:bg-[#c9a227]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    onClick={() => openActionModal(selected, 'accept')}
+                    disabled={updatingIds.includes(selected.id) || selected.status === 'accepted'}
+                    className="bg-green-500/20 border border-green-500/30 text-green-300 font-semibold py-3 px-4 rounded-xl hover:bg-green-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {updatingIds.includes(selected.id) ? (
-                      <RefreshCw className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Edit2 className="w-5 h-5" />
-                    )}
-                    Start Progress
+                   {updatingIds.includes(selected.id) ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                    Accept Project
                   </button>
+
                   <button
-                    onClick={() => {
-                      archiveOrder(selected.id);
-                      setSelected(null);
-                    }}
-                    disabled={updatingIds.includes(selected.id) || deletingIds.includes(selected.id)}
-                    className="bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 font-semibold py-3 px-4 rounded-xl hover:bg-yellow-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <XCircle className="w-5 h-5" />
-                    Archive
-                  </button>
-                  <button
-                    onClick={() => {
-                      deleteOrder(selected.id, selected.projectTitle);
-                    }}
-                    disabled={deletingIds.includes(selected.id)}
+                     onClick={() => openActionModal(selected, 'reject')}
+                    disabled={updatingIds.includes(selected.id) || selected.status === 'rejected'}
                     className="bg-red-500/20 border border-red-500/30 text-red-300 font-semibold py-3 px-4 rounded-xl hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {deletingIds.includes(selected.id) ? (
+                    {updatingIds.includes(selected.id) ? <RefreshCw className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
+                    Reject Project
+                  </button>
+
+                  <button
+                    onClick={() => {
+                        if (selected) {
+                            setDeleteId(selected.id);
+                        }
+                    }}
+                    disabled={isDeleting && deleteId === selected.id}
+                    className="bg-red-500/20 border border-red-500/30 text-red-400 font-semibold py-3 px-4 rounded-xl hover:bg-red-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isDeleting && deleteId === selected.id ? (
                       <RefreshCw className="w-5 h-5 animate-spin" />
                     ) : (
                       <Trash2 className="w-5 h-5" />
                     )}
-                    Delete
+                    Delete Order
                   </button>
                 </div>
               </div>
             </div>
           </div>
         )}
+        {/* Unified Action Modal (Accept/Reject) */}
+        {actionModal.isOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div 
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => setActionModal(prev => ({ ...prev, isOpen: false }))}
+            />
+            <div className={`relative bg-[#232323] border ${
+              actionModal.type === 'accept' ? 'border-green-500/30' : 'border-red-500/30'
+            } rounded-2xl w-full max-w-lg p-6 shadow-2xl`}>
+              <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${
+                actionModal.type === 'accept' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {actionModal.type === 'accept' ? <CheckCircle className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
+                {actionModal.type === 'accept' ? 'Accept Project & Send Email' : 'Reject Project & Send Email'}
+              </h3>
+              
+              <div className="mb-4">
+                <label className="text-[#efe9d6]/60 text-sm mb-2 block">
+                  Email Message Body
+                </label>
+                <textarea
+                  value={actionModal.message}
+                  onChange={(e) => setActionModal(prev => ({ ...prev, message: e.target.value }))}
+                  className={`w-full h-48 bg-[#0f0f0f]/40 border rounded-xl p-4 text-[#efe9d6] focus:outline-none transition-colors resize-none ${
+                    actionModal.type === 'accept' 
+                      ? 'border-[#c9a227]/20 focus:border-green-500/50' 
+                      : 'border-[#c9a227]/20 focus:border-red-500/50'
+                  }`}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setActionModal(prev => ({ ...prev, isOpen: false }))}
+                  className="px-4 py-2 text-[#efe9d6]/60 hover:text-[#efe9d6] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleActionConfirm}
+                  disabled={!actionModal.message.trim()}
+                  className={`border font-semibold py-2 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                    actionModal.type === 'accept'
+                      ? 'bg-green-500/20 border-green-500/30 text-green-300 hover:bg-green-500/30'
+                      : 'bg-red-500/20 border-red-500/30 text-red-300 hover:bg-red-500/30'
+                  }`}
+                >
+                  <Mail className="w-4 h-4" />
+                  Send & {actionModal.type === 'accept' ? 'Accept' : 'Reject'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="bg-[#232323] border border-[#c9a227]/20 text-[#efe9d6]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#efe9d6]/60">
+              This action cannot be undone. This will permanently delete this service order.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border border-[#efe9d6]/20 text-[#efe9d6] hover:bg-[#efe9d6]/10 hover:text-[#efe9d6]">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={(e) => {
+                    e.preventDefault();
+                    confirmDelete();
+                }}
+                className="bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </AdminLayout>
   );

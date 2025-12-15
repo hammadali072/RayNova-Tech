@@ -1,9 +1,20 @@
+
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Type, Image as ImageIcon, Trash2, Plus, Edit2, X, Save } from 'lucide-react';
+import { Type, Image as ImageIcon, Trash2, Edit2, X, Save, Loader2 } from 'lucide-react';
 import { GradientButton } from '../../components/GradientButton';
-import { db } from '../../firebase';
-import { ref as dbRef, push, set, onValue, remove, update } from 'firebase/database';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
 
 // Helper to check if a string is a valid URL
 function isValidUrl(url: string) {
@@ -24,6 +35,7 @@ type ContentBlock = {
 };
 
 export function AddBlogPage() {
+  const { currentUser } = useAuth();
   const [blogTitle, setBlogTitle] = useState('');
   const [category, setCategory] = useState('');
 
@@ -46,7 +58,10 @@ export function AddBlogPage() {
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const isUploading = Object.values(uploads).some(v => (typeof v === 'number' && v > 0));
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // const isUploading = Object.values(uploads).some(v => (typeof v === 'number' && v > 0));
 
   const handlePhotoChange = (file: File, blockId: string) => {
     const reader = new FileReader();
@@ -62,7 +77,7 @@ export function AddBlogPage() {
       });
     };
     reader.onerror = () => {
-      alert('Failed to read file');
+      toast.error('Failed to read file');
     };
     reader.readAsDataURL(file);
   };
@@ -75,7 +90,7 @@ export function AddBlogPage() {
       setFeaturedImage(base64String);
     };
     reader.onerror = () => {
-      alert('Failed to read featured image');
+      toast.error('Failed to read featured image');
     };
     reader.readAsDataURL(file);
   };
@@ -97,7 +112,7 @@ export function AddBlogPage() {
       setAuthorAvatar(base64String);
     };
     reader.onerror = () => {
-      alert('Failed to read author avatar');
+      toast.error('Failed to read author avatar');
     };
     reader.readAsDataURL(file);
   };
@@ -115,7 +130,7 @@ export function AddBlogPage() {
     setContentBlocks(prev => prev.map(block => {
       if (block.id === id) {
         if (block.type === 'image') {
-          if (content === '' || isValidUrl(content)) {
+          if (content === '' || isValidUrl(content) || content.startsWith('data:image')) {
             return { ...block, content };
           } else {
             return block;
@@ -149,71 +164,86 @@ export function AddBlogPage() {
     });
   };
 
+  const API_URL = 'http://localhost:5000/api/blogs';
+
+  const fetchBlogs = async () => {
+      try {
+          const response = await fetch(API_URL);
+          const data = await response.json();
+          // Sort handled by backend but good to be safe or if reusing component state logic
+          setBlogs(data); 
+      } catch (error) {
+          console.error("Failed to fetch blogs", error);
+          toast.error("Failed to fetch blogs");
+      }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     (async () => {
       try {
-        const blogsRef = dbRef(db, 'blogs');
+        const blogObj = {
+            title: blogTitle,
+            category,
+            featuredImage: featuredImage || null,
+            author: {
+              name: authorName || null,
+              role: authorRole || null,
+              avatar: authorAvatar || null,
+              bio: authorBio || null,
+            },
+            // publishDate is handled by backend on create, but we might want to preserve it on update if not sent
+            // For now backend handles it.
+            tags: tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [],
+            contentBlocks: contentBlocks.map(cb => ({ type: cb.type, content: cb.content, items: cb.items, alt: cb.alt })),
+        };
 
-        // If in edit mode, update existing blog
+        const token = currentUser?.token;
+        console.log('Publishing blog with token:', token ? 'Token exists' : 'No token');
+
         if (isEditMode && editingBlogId) {
-          const blogRef = dbRef(db, `blogs/${editingBlogId}`);
-          const createdAt = new Date().toISOString();
-          const blogObj = {
-            title: blogTitle,
-            category,
-            featuredImage: featuredImage || null,
-            author: {
-              name: authorName || null,
-              role: authorRole || null,
-              avatar: authorAvatar || null,
-              bio: authorBio || null,
-            },
-            publishDate: new Date(createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            tags: tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [],
-            content: contentBlocks.map(cb => ({ type: cb.type, content: cb.content })),
-            contentBlocks,
-            updatedAt: createdAt,
-          };
+            const response = await fetch(`${API_URL}/${editingBlogId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(blogObj)
+            });
+            
+            if(!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown server error' }));
+                throw new Error(errorData.message || 'Failed to update blog');
+            }
+            
+            toast.success('Blog post updated successfully!');
+            cancelEdit();
+        } else {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(blogObj)
+            });
 
-          await update(blogRef, blogObj);
-          alert('Blog post updated successfully!');
+            if(!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown server error' }));
+                throw new Error(errorData.message || 'Failed to create blog');
+            }
 
-          // Reset edit mode
-          cancelEdit();
+            toast.success('Blog post created successfully!');
+            resetForm();
         }
-        // Otherwise, create new blog
-        else {
-          const newRef = push(blogsRef);
-          const createdAt = new Date().toISOString();
-          const blogObj = {
-            id: newRef.key,
-            title: blogTitle,
-            category,
-            featuredImage: featuredImage || null,
-            author: {
-              name: authorName || null,
-              role: authorRole || null,
-              avatar: authorAvatar || null,
-              bio: authorBio || null,
-            },
-            publishDate: new Date(createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            tags: tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [],
-            content: contentBlocks.map(cb => ({ type: cb.type, content: cb.content })),
-            contentBlocks,
-            createdAt,
-          };
-
-          await set(newRef, blogObj);
-          alert('Blog post created successfully!');
-
-          // Reset form
-          resetForm();
-        }
+        fetchBlogs();
       } catch (err: any) {
         console.error('Failed to publish blog', err);
-        const msg = err?.message || JSON.stringify(err) || 'Unknown error';
-        alert('Failed to publish blog: ' + msg);
+        toast.error('Failed to publish blog: ' + err.message);
       }
     })();
   };
@@ -250,16 +280,30 @@ export function AddBlogPage() {
   };
 
   // Delete blog function
-  const handleDeleteBlog = async (blogId: string, blogTitle: string) => {
-    if (window.confirm(`Are you sure you want to delete "${blogTitle}"? This action cannot be undone.`)) {
-      try {
-        const blogRef = dbRef(db, `blogs/${blogId}`);
-        await remove(blogRef);
-        alert('Blog deleted successfully!');
-      } catch (err: any) {
+  // Delete blog function
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    setIsDeleting(true);
+    try {
+        const token = currentUser?.token;
+        const response = await fetch(`${API_URL}/${deleteId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to delete');
+
+        toast.success('Blog deleted successfully!');
+        fetchBlogs();
+    } catch (err: any) {
         console.error('Failed to delete blog', err);
-        alert('Failed to delete blog: ' + err.message);
-      }
+        toast.error('Failed to delete blog: ' + err.message);
+    } finally {
+        setIsDeleting(false);
+        setDeleteId(null);
     }
   };
 
@@ -361,7 +405,7 @@ export function AddBlogPage() {
               </div>
             </div>
 
-            {(previews[block.id] || (block.content && isValidUrl(block.content))) && (
+            {(previews[block.id] || (block.content && isValidUrl(block.content)) || block.content?.startsWith('data:')) && (
               <div className="rounded-xl overflow-hidden border border-[#c9a227]/10 mt-3">
                 <img src={previews[block.id] ? previews[block.id] : block.content} alt="Preview" className="w-full h-auto" />
               </div>
@@ -371,34 +415,8 @@ export function AddBlogPage() {
     }
   };
 
-  useEffect(() => {
-    const blogsRef = dbRef(db, 'blogs');
-    const unsub = onValue(blogsRef, (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        const arr = Object.entries(val).map(([k, v]) => {
-          const item: any = { id: k, ...(v as any) };
-          if (item.contentBlocks && !Array.isArray(item.contentBlocks)) {
-            try {
-              item.contentBlocks = Object.values(item.contentBlocks);
-            } catch {
-              item.contentBlocks = [];
-            }
-          }
-          return item;
-        });
-        arr.sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-        setBlogs(arr as any);
-      } else {
-        setBlogs([]);
-      }
-    });
-
-    return () => unsub();
-  }, []);
-
   return (
-    <AdminLayout activePage="blog">
+        <AdminLayout activePage="blog">
       <div className="max-w-7xl mx-auto">
         {/* Header with edit mode indicator */}
         <div className="mb-8">
@@ -604,165 +622,188 @@ export function AddBlogPage() {
                 type="button"
                 onClick={() => addBlock('paragraph')}
                 className="flex items-center gap-2 px-4 py-2 bg-[#232323] border border-[#c9a227]/20 rounded-lg text-[#efe9d6] hover:bg-[#c9a227]/20 hover:border-[#c9a227]/40 transition-all text-sm"
-              >
+               >
                 <Type className="w-4 h-4" />
                 Paragraph
               </button>
-              <button
-                type="button"
-                onClick={() => addBlock('image')}
-                className="flex items-center gap-2 px-4 py-2 bg-[#232323] border border-[#c9a227]/20 rounded-lg text-[#efe9d6] hover:bg-[#c9a227]/20 hover:border-[#c9a227]/40 transition-all text-sm"
-              >
-                <ImageIcon className="w-4 h-4" />
-                Image
-              </button>
-            </div>
-
-            {/* Content Blocks */}
-            <div className="space-y-4">
-              {contentBlocks.length === 0 ? (
-                <div className="text-center py-12 text-[#efe9d6]/40 border-2 border-dashed border-[#c9a227]/20 rounded-xl">
-                  Click a button above to add content blocks
-                </div>
-              ) : (
-                contentBlocks.map((block, index) => (
-                  <div key={block.id} className="relative group">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1">
-                        <div className="text-[#c9a227] text-xs mb-2 flex items-center gap-2">
-                          <span className="bg-[#c9a227]/20 px-2 py-1 rounded">
-                            Block {index + 1}: {block.type.toUpperCase()}
-                          </span>
-                        </div>
-                        {renderBlockInput(block)}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeBlock(block.id)}
-                        className="p-2 text-[#efe9d6]/40 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
+               <button
+                  type="button"
+                  onClick={() => addBlock('image')}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#232323] border border-[#c9a227]/20 rounded-lg text-[#efe9d6] hover:bg-[#c9a227]/20 hover:border-[#c9a227]/40 transition-all text-sm"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  Image
+                </button>
+              </div>
+  
+              {/* Content Blocks */}
+              <div className="space-y-4">
+                {contentBlocks.length === 0 ? (
+                  <div className="text-center py-12 text-[#efe9d6]/40 border-2 border-dashed border-[#c9a227]/20 rounded-xl">
+                    Click a button above to add content blocks
                   </div>
-                ))
-              )}
+                ) : (
+                  contentBlocks.map((block, index) => (
+                    <div key={block.id} className="relative group">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <div className="text-[#c9a227] text-xs mb-2 flex items-center gap-2">
+                            <span className="bg-[#c9a227]/20 px-2 py-1 rounded">
+                              Block {index + 1}: {block.type.toUpperCase()}
+                            </span>
+                          </div>
+                          {renderBlockInput(block)}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeBlock(block.id)}
+                          className="p-2 text-[#efe9d6]/40 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Submit Buttons */}
-          <div className="flex gap-4 flex-wrap lg:justify-end justify-start">
-            {isEditMode && (
+  
+            {/* Submit Buttons */}
+            <div className="flex gap-4 flex-wrap lg:justify-end justify-start">
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="px-8 py-3 border border-red-500/40 text-red-300 rounded-xl hover:bg-red-500/10 transition-all"
+                >
+                  Cancel Edit
+                </button>
+              )}
               <button
                 type="button"
-                onClick={cancelEdit}
-                className="px-8 py-3 border border-red-500/40 text-red-300 rounded-xl hover:bg-red-500/10 transition-all"
+                className="px-8 py-3 border border-[#c9a227]/40 text-[#efe9d6] rounded-xl hover:bg-[#c9a227]/10 transition-all"
               >
-                Cancel Edit
+                Save as Draft
               </button>
-            )}
-            <button
-              type="button"
-              className="px-8 py-3 border border-[#c9a227]/40 text-[#efe9d6] rounded-xl hover:bg-[#c9a227]/10 transition-all"
-            >
-              Save as Draft
-            </button>
-            <GradientButton size="lg" type="submit">
-              {isEditMode ? (
-                <>
-                  <Save className="w-5 h-5 mr-2" />
-                  Update Blog Post
-                </>
-              ) : (
-                'Publish Blog Post'
-              )}
-            </GradientButton>
-          </div>
-        </form>
-
-        {/* Published Blogs List */}
-        <div className="mt-12">
-          <div className="flex justify-between items-center flex-wrap mb-4">
-            <h3 className="text-[#efe9d6]">Published Blogs</h3>
-            <div className="text-sm text-[#efe9d6]/60">{blogs.length} blogs published</div>
-          </div>
-          {blogs.length === 0 ? (
-            <div className="text-[#efe9d6]/60">No blogs published yet.</div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {blogs.map((b) => {
-                const firstImageBlock = (b.contentBlocks || []).find((cb: any) => cb.type === 'image' && cb.content && isValidUrl(cb.content));
-                const thumbnail = b.featuredImage ? b.featuredImage : (firstImageBlock ? firstImageBlock.content : null);
-                return (
-                  <div key={b.id} className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-6 flex sm:flex-row flex-col gap-6 items-start group hover:border-[#c9a227]/30 transition-all">
-                    {thumbnail ? (
-                      <div className="w-40 h-28 overflow-hidden rounded-lg flex-shrink-0 border border-[#c9a227]/10">
-                        <img src={thumbnail} alt={b.title} className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-40 h-28 bg-[#0f0f0f]/40 rounded-lg flex-shrink-0 border border-[#c9a227]/10 flex items-center justify-center text-sm text-[#efe9d6]/40">
-                        No Image
-                      </div>
-                    )}
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <div className="min-w-0">
-                          <div className="text-[#efe9d6] text-lg font-semibold truncate">{b.title}</div>
-                          <div className="text-[#efe9d6]/60 text-sm mb-2">
-                            {b.category} • {new Date(b.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </div>
+              <GradientButton size="lg" type="submit">
+                {isEditMode ? (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Update Blog Post
+                  </>
+                ) : (
+                  'Publish Blog Post'
+                )}
+              </GradientButton>
+            </div>
+          </form>
+  
+          {/* Published Blogs List */}
+          <div className="mt-12">
+            <div className="flex justify-between items-center flex-wrap mb-4">
+              <h3 className="text-[#efe9d6]">Published Blogs</h3>
+              <div className="text-sm text-[#efe9d6]/60">{blogs.length} blogs published</div>
+            </div>
+            {blogs.length === 0 ? (
+              <div className="text-[#efe9d6]/60">No blogs published yet.</div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {blogs.map((b) => {
+                  const firstImageBlock = (b.contentBlocks || []).find((cb: any) => cb.type === 'image' && cb.content && isValidUrl(cb.content));
+                  const thumbnail = b.featuredImage ? b.featuredImage : (firstImageBlock ? firstImageBlock.content : null);
+                  return (
+                    <div key={b.id} className="bg-[#232323]/60 backdrop-blur-xl border border-[#c9a227]/10 rounded-2xl p-6 flex sm:flex-row flex-col gap-6 items-start group hover:border-[#c9a227]/30 transition-all">
+                      {thumbnail ? (
+                        <div className="w-40 h-28 overflow-hidden rounded-lg flex-shrink-0 border border-[#c9a227]/10">
+                          <img src={thumbnail} alt={b.title} className="w-full h-full object-cover" />
                         </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleEditBlog(b)}
-                            className="p-2 bg-[#c9a227]/20 border border-[#c9a227]/30 rounded-lg text-[#c9a227] hover:bg-[#c9a227]/30 transition-all"
-                            title="Edit Blog"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBlog(b.id, b.title)}
-                            className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/30 transition-all"
-                            title="Delete Blog"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Tags */}
-                      {b.tags && b.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {b.tags.slice(0, 3).map((tag: string, index: number) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-[#0f0f0f]/60 border border-[#c9a227]/10 rounded text-xs text-[#efe9d6]/60"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {b.tags.length > 3 && (
-                            <span className="px-2 py-1 bg-[#0f0f0f]/60 border border-[#c9a227]/10 rounded text-xs text-[#efe9d6]/40">
-                              +{b.tags.length - 3} more
-                            </span>
-                          )}
+                      ) : (
+                        <div className="w-40 h-28 bg-[#0f0f0f]/40 rounded-lg flex-shrink-0 border border-[#c9a227]/10 flex items-center justify-center text-sm text-[#efe9d6]/40">
+                          No Image
                         </div>
                       )}
+  
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div className="min-w-0">
+                            <div className="text-[#efe9d6] text-lg font-semibold truncate">{b.title}</div>
+                            <div className="text-[#efe9d6]/60 text-sm mb-2">
+                              {b.category} • {new Date(b.createdAt || b.publishDate).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </div>
+                          </div>
+  
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleEditBlog(b)}
+                              className="p-2 bg-[#c9a227]/20 border border-[#c9a227]/30 rounded-lg text-[#c9a227] hover:bg-[#c9a227]/30 transition-all"
+                              title="Edit Blog"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(b.id)}
+                              className="p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/30 transition-all"
+                              title="Delete Blog"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+  
+                        {/* Tags */}
+                        {b.tags && b.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {b.tags.slice(0, 3).map((tag: string, index: number) => (
+                              <span
+                                key={index}
+                                className="px-2 py-1 bg-[#0f0f0f]/60 border border-[#c9a227]/10 rounded text-xs text-[#efe9d6]/60"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {b.tags.length > 3 && (
+                              <span className="px-2 py-1 bg-[#0f0f0f]/60 border border-[#c9a227]/10 rounded text-xs text-[#efe9d6]/40">
+                                +{b.tags.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="bg-[#232323] border border-[#c9a227]/20 text-[#efe9d6]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#efe9d6]/60">
+              This action cannot be undone. This will permanently delete the blog post.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border border-[#efe9d6]/20 text-[#efe9d6] hover:bg-[#efe9d6]/10 hover:text-[#efe9d6]">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={(e) => {
+                    e.preventDefault();
+                    confirmDelete();
+                }}
+                className="bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
-  );
-}
+    );
+  }

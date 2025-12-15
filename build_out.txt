@@ -1,0 +1,58 @@
+
+> RayNova Tech Landing Page@0.1.0 build
+> vite build
+
+[36mvite v6.3.5 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 7 modules transformed.
+[31m✗[39m Build failed in 1.08s
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 4 errors:
+C:/Users/abide/OneDrive/Desktop/Sajideen/TechTide Data/RayNova-Tech/RayNova-Tech/src/pages/admin/UsersPage.tsx:47:9: ERROR: The symbol "deleteId" has already been declared
+C:/Users/abide/OneDrive/Desktop/Sajideen/TechTide Data/RayNova-Tech/RayNova-Tech/src/pages/admin/UsersPage.tsx:47:19: ERROR: The symbol "setDeleteId" has already been declared
+C:/Users/abide/OneDrive/Desktop/Sajideen/TechTide Data/RayNova-Tech/RayNova-Tech/src/pages/admin/UsersPage.tsx:48:9: ERROR: The symbol "isDeleting" has already been declared
+C:/Users/abide/OneDrive/Desktop/Sajideen/TechTide Data/RayNova-Tech/RayNova-Tech/src/pages/admin/UsersPage.tsx:48:21: ERROR: The symbol "setIsDeleting" has already been declared[31m
+file: [36mC:/Users/abide/OneDrive/Desktop/Sajideen/TechTide Data/RayNova-Tech/RayNova-Tech/src/pages/admin/UsersPage.tsx:47:9[31m
+[33m
+[33mThe symbol "deleteId" has already been declared[33m
+45 |    const [isDeleting, setIsDeleting] = useState(false);
+46 |  
+47 |    const [deleteId, setDeleteId] = useState<string | null>(null);
+   |           ^
+48 |    const [isDeleting, setIsDeleting] = useState(false);
+49 |  
+
+[33mThe symbol "setDeleteId" has already been declared[33m
+45 |    const [isDeleting, setIsDeleting] = useState(false);
+46 |  
+47 |    const [deleteId, setDeleteId] = useState<string | null>(null);
+   |                     ^
+48 |    const [isDeleting, setIsDeleting] = useState(false);
+49 |  
+
+[33mThe symbol "isDeleting" has already been declared[33m
+46 |  
+47 |    const [deleteId, setDeleteId] = useState<string | null>(null);
+48 |    const [isDeleting, setIsDeleting] = useState(false);
+   |           ^
+49 |  
+50 |    const [editUserData, setEditUserData] = useState({
+
+[33mThe symbol "setIsDeleting" has already been declared[33m
+46 |  
+47 |    const [deleteId, setDeleteId] = useState<string | null>(null);
+48 |    const [isDeleting, setIsDeleting] = useState(false);
+   |                       ^
+49 |  
+50 |    const [editUserData, setEditUserData] = useState({
+[31m
+    at failureErrorWithLog (C:\Users\abide\OneDrive\Desktop\Sajideen\TechTide Data\RayNova-Tech\RayNova-Tech\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\abide\OneDrive\Desktop\Sajideen\TechTide Data\RayNova-Tech\RayNova-Tech\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\abide\OneDrive\Desktop\Sajideen\TechTide Data\RayNova-Tech\RayNova-Tech\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\abide\OneDrive\Desktop\Sajideen\TechTide Data\RayNova-Tech\RayNova-Tech\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\abide\OneDrive\Desktop\Sajideen\TechTide Data\RayNova-Tech\RayNova-Tech\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

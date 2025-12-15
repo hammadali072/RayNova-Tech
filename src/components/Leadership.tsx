@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { ref, onValue } from "firebase/database";
-import { db } from "../firebase";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Linkedin, Twitter, Mail } from "lucide-react";
 
@@ -8,33 +6,31 @@ export function Leadership() {
   const [team, setTeam] = useState([]);
 
   useEffect(() => {
-    const teamRef = ref(db, "teams");
-
-    const unsubscribe = onValue(teamRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-
-        // Convert Firebase object → Array
-        const membersArray = Object.keys(data).map((key) => ({
-          id: key,
-          name: data[key].memberName,
-          role: data[key].designation,
-          bio: data[key].bio || "-",
-          image: data[key].photoURL || "https://via.placeholder.com/300",
-          social: {
-            linkedin: data[key].linkedin ?? "#",
-            twitter: data[key].twitter ?? "#",
-            email: data[key].email ?? "#",
-          },
-        }));
-
-        setTeam(membersArray);
-      } else {
-        setTeam([]);
-      }
-    });
-
-    return () => unsubscribe();
+    const fetchTeam = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/team');
+            const data = await response.json();
+            
+            // Map data to match component expectation
+            const membersArray = data.map((member: any) => ({
+                id: member.id,
+                name: member.memberName,
+                role: member.designation,
+                bio: member.bio || "-",
+                image: member.photoURL || "https://via.placeholder.com/300",
+                social: {
+                  linkedin: member.linkedin ?? "#",
+                  twitter: member.twitter ?? "#",
+                  email: member.email ?? "#",
+                },
+              }));
+              
+            setTeam(membersArray);
+        } catch (error) {
+            console.error("Error fetching team:", error);
+        }
+    }
+    fetchTeam();
   }, []);
 
   return (

@@ -1,8 +1,6 @@
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
-import { GradientButton } from './GradientButton';
 import { useState } from 'react';
-import { db } from '../firebase'; // Adjust path according to your project structure
-import { ref, push, set } from 'firebase/database';
+import { toast } from 'sonner';
 
 export function Contact() {
     const [formData, setFormData] = useState({
@@ -26,30 +24,17 @@ export function Contact() {
         setIsSubmitting(true);
 
         try {
-            // Create a reference to the 'contacts' node in Firebase
-            const contactsRef = ref(db, 'contacts');
+            const response = await fetch('http://localhost:5000/api/contacts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
 
-            // Generate a new unique ID for this contact submission
-            const newContactRef = push(contactsRef);
-
-            // Prepare the contact data object
-            const contactData = {
-                id: newContactRef.key,
-                name: formData.name.trim(),
-                email: formData.email.trim().toLowerCase(),
-                phone: formData.phone.trim() || null,
-                company: formData.company.trim() || null,
-                service: formData.service,
-                message: formData.message.trim(),
-                status: 'new', // Status can be: new, read, responded, archived
-                createdAt: new Date().toISOString(),
-                ipAddress: '', // You can add IP tracking if needed
-                userAgent: navigator.userAgent || 'Unknown',
-                source: 'website_contact_form'
-            };
-
-            // Save to Firebase
-            await set(newContactRef, contactData);
+            if (!response.ok) {
+                throw new Error('Failed to submit contact form');
+            }
 
             // Reset form on success
             setFormData({
@@ -63,17 +48,17 @@ export function Contact() {
 
             // Show success message
             setSubmitSuccess(true);
+            toast.success("Message sent successfully! We'll get back to you soon.");
 
             // Hide success message after 5 seconds
             setTimeout(() => {
                 setSubmitSuccess(false);
             }, 5000);
 
-            console.log('Contact form submitted successfully:', contactData);
-
         } catch (error: any) {
             console.error('Error submitting contact form:', error);
             setSubmitError('Failed to submit your message. Please try again later.');
+            toast.error("Failed to submit message. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

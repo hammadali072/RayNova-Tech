@@ -3,8 +3,7 @@ import Lottie from "lottie-react";
 
 import chatIcon2 from "../../assets/RobotSaysHi.json";
 import "./Chatbot.css";
-import { db } from "../../firebase";
-import { ref, get } from "firebase/database";
+
 
 const Chatbot = () => {
   const [open, setOpen] = useState(false);
@@ -58,22 +57,21 @@ const Chatbot = () => {
     }
   ];
 
-  // Fetch services from Firebase
+  // Fetch services from API
   const fetchServices = async (): Promise<any[]> => {
     try {
-      const servicesRef = ref(db, 'services');
-      const snapshot = await get(servicesRef);
-
-      if (snapshot.exists()) {
-        const servicesData = snapshot.val() as Record<string, any>;
-        const servicesList = Object.entries(servicesData).map((entry, index) => ({
-          id: entry[0],
-          ...(entry[1] as Record<string, any>),
-          number: index + 1
-        }));
-        return servicesList;
+      const response = await fetch('http://localhost:5000/api/services');
+      if (!response.ok) {
+        throw new Error('Failed to fetch services');
       }
-      return [];
+      const data = await response.json();
+      
+      // Add number property to match existing format
+      return data.map((service: any, index: number) => ({
+        ...service,
+        id: service._id, // Map _id to id for consistency
+        number: index + 1
+      }));
     } catch (error) {
       console.error("Error fetching services:", error);
       return [];
@@ -296,6 +294,18 @@ const Chatbot = () => {
     }
   };
 
+  // Input ref for auto-focus
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus input when loading finishes
+  useEffect(() => {
+    if (!loading && open && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [loading, open]);
+
   // Handle message send
   const handleSendMessage = async () => {
     if (!text.trim()) return;
@@ -307,6 +317,11 @@ const Chatbot = () => {
     const currentText = text;
     setText("");
     setLoading(true);
+
+    // Keep focus
+    setTimeout(() => {
+        inputRef.current?.focus();
+    }, 0);
 
     // Check if user is asking about services
     if (userMessage.includes('service') || userMessage.includes('what do you offer') || userMessage.includes('what can you do')) {
@@ -387,20 +402,9 @@ const Chatbot = () => {
           onClick={() => setOpen(true)}
           className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 md:bottom-6 md:right-6 lg:bottom-8 lg:right-8 cursor-pointer z-40 flex flex-col items-end group"
         >
-          {/* Text animation - Responsive (hidden on very small screens) */}
+          {/* Text animation - Simplified to just showing the text without scrolling */}
           <div
-            className="mb-1 sm:mb-2 transition-all duration-300 ease-in-out"
-            style={{
-              transform: (() => {
-                const maxSteps = textToAnimate.length * 2;
-                const currentStep = animationStep % maxSteps;
-                const position = currentStep <= textToAnimate.length
-                  ? currentStep * 6
-                  : (maxSteps - currentStep) * 6;
-                return `translateX(-${position}px)`;
-              })(),
-              opacity: animationStep % (textToAnimate.length * 2) < 5 ? 0 : 1
-            }}
+            className="mb-1 sm:mb-2 transition-all duration-300 ease-in-out animate-bounce"
           >
             <div className="hidden sm:block bg-gradient-to-r from-[#c9a227] to-[#d4b13f] text-[#0f0f0f] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-[0_8px_20px_rgba(201,162,39,0.3)] font-semibold text-xs sm:text-sm whitespace-nowrap border border-[#c9a227]/40 backdrop-blur-sm">
               {textToAnimate}
@@ -444,7 +448,7 @@ const Chatbot = () => {
               flex flex-col
               overflow-hidden
               ${modalAnimation
-                ? 'w-full bottom-0 right-0 sm:w-[420px] sm:bottom-6 sm:right-6 lg:w-[480px] lg:bottom-8 lg:right-8 max-w-[100vw] opacity-100 rounded-t-2xl sm:rounded-t-3xl sm:rounded-3xl h-[65vh] sm:h-[600px] lg:h-[650px]'
+                ? 'w-full bottom-0 right-0 sm:w-[360px] sm:bottom-6 sm:right-6 lg:w-[400px] lg:bottom-8 lg:right-8 max-w-[100vw] opacity-100 rounded-t-2xl sm:rounded-t-3xl sm:rounded-3xl h-[65vh] sm:h-[500px] lg:h-[550px]'
                 : 'w-12 h-12 opacity-0 scale-50 rounded-full'
               }
               !bottom-0 !right-0
@@ -564,6 +568,7 @@ const Chatbot = () => {
             <div className="p-2 sm:p-2.5 md:p-3 lg:p-4 border-t border-[#c9a227]/20 bg-[#232323]/60">
               <div className="flex gap-1.5 sm:gap-2 md:gap-3">
                 <input
+                  ref={inputRef}
                   type="text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}

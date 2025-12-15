@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { Toaster } from './components/ui/sonner';
 import { RequireAdmin } from './components/admin/RequireAdmin';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
@@ -41,6 +42,7 @@ export default function App() {
     <AuthProvider>
 
       <Router>
+        <Toaster position="top-center" richColors />
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />

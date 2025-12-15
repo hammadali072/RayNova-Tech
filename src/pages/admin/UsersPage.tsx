@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { Search, ChevronDown, Plus, X, Mail, Users, Lock, Shield, Edit2, Trash2, Save } from 'lucide-react';
+import { Search, ChevronDown, Plus, X, Mail, Users, Lock, Shield, Edit2, Trash2, Save, Loader2 } from 'lucide-react';
 import { GradientButton } from '../../components/GradientButton';
-import { auth, db } from '../../firebase';
-import { ref, push, set, onValue, update, remove } from 'firebase/database';
-import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
 
 interface User {
-  id: string;
+  _id: string; // Changed from id to _id for MongoDB
+  id?: string; // Keep for compatibility if needed
   name: string;
   email: string;
-  password: string;
+  password?: string;
   role: 'Admin' | 'User';
   registeredDate: string;
 }
@@ -19,6 +28,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Edit state
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -31,6 +41,11 @@ export function UsersPage() {
     role: 'User' as 'Admin' | 'User'
   });
 
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+
+
   const [editUserData, setEditUserData] = useState({
     name: '',
     email: '',
@@ -38,46 +53,80 @@ export function UsersPage() {
     role: 'User' as 'Admin' | 'User'
   });
 
+  // Fetch users from backend
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/users');
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   // Handle role change for existing users
   const handleRoleChange = async (userId: string, newRole: 'Admin' | 'User') => {
     try {
-      const userRef = ref(db, `users/${userId}`);
-      await update(userRef, { role: newRole });
+      const response = await fetch(`http://localhost:5000/api/auth/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update role');
+      
+      // Optimistic update or refetch
+      fetchUsers();
+      toast.success('Role updated successfully!');
     } catch (err) {
       console.error('Failed to update role', err);
-      alert('Failed to update role. See console for details.');
+      toast.error('Failed to update role. See console for details.');
     }
   };
 
   // Handle delete user
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    // Prevent deleting yourself
-    const currentUser = users.find(u => u.id === userId);
-    if (currentUser?.email === 'admin@raynova.com') {
-      alert('Cannot delete the default admin account!');
+  // Handle delete user
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    
+    // Prevent deleting default admin (double check)
+    const userToDelete = users.find(u => u._id === deleteId || u.id === deleteId);
+    if (userToDelete?.email === 'admin@raynova.com') {
+      toast.error('Cannot delete the default admin account!');
+      setDeleteId(null);
       return;
     }
 
-    if (window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-      try {
-        // Delete from Realtime Database
-        const userRef = ref(db, `users/${userId}`);
-        await remove(userRef);
+    setIsDeleting(true);
 
-        // Note: Deleting from Firebase Auth requires special permissions
-        // Admin SDK is needed for this, which requires backend server
-        // For now, we only delete from database
-        // You can manually delete from Firebase Console if needed
-      } catch (err) {
-        console.error('Failed to delete user', err);
-        alert('Failed to delete user. See console for details.');
-      }
+    try {
+      const response = await fetch(`http://localhost:5000/api/auth/users/${deleteId}`, {
+         method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete user');
+
+      toast.success('User deleted successfully');
+      fetchUsers();
+    } catch (err) {
+      console.error('Failed to delete user', err);
+      toast.error('Failed to delete user. See console for details.');
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
   // Handle edit user
   const handleEditUser = (user: User) => {
-    setEditingUserId(user.id);
+    setEditingUserId(user._id || user.id || '');
     setIsEditMode(true);
     setEditUserData({
       name: user.name || '',
@@ -94,14 +143,10 @@ export function UsersPage() {
     if (!editingUserId) return;
 
     try {
-      const userRef = ref(db, `users/${editingUserId}`);
-
-      // Prepare update data
       const updateData: any = {
         name: editUserData.name,
         email: editUserData.email,
         role: editUserData.role,
-        updatedAt: new Date().toISOString()
       };
 
       // Only update password if it's provided
@@ -109,14 +154,21 @@ export function UsersPage() {
         updateData.password = editUserData.password;
       }
 
-      await update(userRef, updateData);
+      const response = await fetch(`http://localhost:5000/api/auth/users/${editingUserId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update user');
 
       // Reset edit mode
       cancelEdit();
-      alert('User updated successfully!');
+      fetchUsers();
+      toast.success('User updated successfully!');
     } catch (err) {
       console.error('Failed to update user', err);
-      alert('Failed to update user. See console for details.');
+      toast.error('Failed to update user. See console for details.');
     }
   };
 
@@ -135,33 +187,18 @@ export function UsersPage() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic duplicate email check against current loaded users
-    if (users.some(u => u.email === newUser.email)) {
-      alert('A user with this email already exists!');
-      return;
-    }
-
     try {
-      // Step 1: Create user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        newUser.email,
-        newUser.password
-      );
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      });
 
-      const firebaseUID = userCredential.user.uid;
-
-      // Step 2: Store user data in Realtime Database with Firebase UID
-      const usersRef = ref(db, `users/${firebaseUID}`);
-      const userToAdd = {
-        id: firebaseUID,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        registeredDate: new Date().toISOString()
-      };
-
-      await set(usersRef, userToAdd);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create user');
+      }
 
       // Reset form
       setNewUser({
@@ -171,16 +208,11 @@ export function UsersPage() {
         role: 'User'
       });
       setIsAddUserModalOpen(false);
-      alert('User added successfully!');
+      fetchUsers();
+      toast.success('User added successfully!');
     } catch (err: any) {
       console.error('Failed to add user', err);
-      if (err.code === 'auth/email-already-in-use') {
-        alert('This email is already registered!');
-      } else if (err.code === 'auth/weak-password') {
-        alert('Password should be at least 6 characters!');
-      } else {
-        alert('Failed to add user. ' + err.message);
-      }
+      toast.error(err.message);
     }
   };
 
@@ -188,30 +220,6 @@ export function UsersPage() {
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  useEffect(() => {
-    const usersRef = ref(db, 'users');
-    const unsub = onValue(usersRef, (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        const arr: User[] = Object.entries(val).map(([key, v]) => ({ id: key, ...(v as any) }));
-        setUsers(arr as User[]);
-      } else {
-        // If there are no users in DB yet, create a default admin
-        const defaultUser = {
-          name: 'Admin User',
-          email: 'admin@raynova.com',
-          password: 'admin123',
-          role: 'Admin' as const,
-          registeredDate: new Date().toISOString()
-        };
-        const newRef = push(usersRef);
-        set(newRef, { id: newRef.key, ...defaultUser });
-      }
-    });
-
-    return () => unsub();
-  }, []);
 
   return (
     <AdminLayout activePage="users">
@@ -496,12 +504,12 @@ export function UsersPage() {
                 <tbody>
                   {filteredUsers.map((user) => (
                     <tr
-                      key={user.id}
+                      key={user._id || user.id}
                       className="border-b border-[#c9a227]/5 hover:bg-[#c9a227]/5 transition-colors group"
                     >
                       <td className="px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4">
                         <div className="text-[#efe9d6] font-medium text-xs sm:text-sm">{user.name}</div>
-                        <div className="text-[#efe9d6]/40 text-[10px] sm:text-xs">ID: {user.id.substring(0, 8)}...</div>
+                        <div className="text-[#efe9d6]/40 text-[10px] sm:text-xs">ID: {(user._id || user.id || '').substring(0, 8)}...</div>
                         <div className="text-[#efe9d6]/80 text-xs sm:text-sm mt-1 sm:hidden">{user.email}</div>
                       </td>
                       <td className="px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 text-[#efe9d6]/80 text-xs sm:text-sm hidden sm:table-cell">{user.email}</td>
@@ -526,7 +534,7 @@ export function UsersPage() {
                         <div className="relative">
                           <select
                             value={user.role}
-                            onChange={(e) => handleRoleChange(user.id, e.target.value as 'Admin' | 'User')}
+                            onChange={(e) => handleRoleChange(user._id || user.id || '', e.target.value as 'Admin' | 'User')}
                             className="appearance-none bg-[#0f0f0f]/60 border border-[#c9a227]/20 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 pr-8 sm:pr-10 text-[#efe9d6] text-xs sm:text-sm focus:outline-none focus:border-[#c9a227]/60 focus:ring-2 focus:ring-[#c9a227]/20 transition-all duration-300 cursor-pointer w-24 sm:w-28 md:w-32"
                             disabled={user.email === 'admin@raynova.com'}
                           >
@@ -547,7 +555,7 @@ export function UsersPage() {
                             <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteUser(user.id, user.name)}
+                            onClick={() => setDeleteId(user._id || user.id || '')}
                             className="p-1.5 sm:p-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/30 transition-all"
                             title="Delete User"
                             disabled={user.email === 'admin@raynova.com'}
@@ -575,6 +583,50 @@ export function UsersPage() {
 
         </div>
       </div>
+    <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="bg-[#232323] border border-[#c9a227]/20 text-[#efe9d6]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#efe9d6]/60">
+              This action cannot be undone. This will permanently delete the user.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border border-[#efe9d6]/20 text-[#efe9d6] hover:bg-[#efe9d6]/10 hover:text-[#efe9d6]">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={(e) => {
+                    e.preventDefault();
+                    confirmDelete();
+                }}
+                className="bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="bg-[#232323] border border-[#c9a227]/20 text-[#efe9d6]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#efe9d6]/60">
+              This action cannot be undone. This will permanently delete the user.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border border-[#efe9d6]/20 text-[#efe9d6] hover:bg-[#efe9d6]/10 hover:text-[#efe9d6]">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={(e) => {
+                    e.preventDefault();
+                    confirmDelete();
+                }}
+                className="bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
