@@ -1,24 +1,23 @@
 import { Globe, MessageSquare, Mic, Code, Zap, Brain } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import '../firebase';
+
 
 export function Services() {
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/services');
-        const data = await response.json();
-        setServices(data);
-      } catch (error) {
-        console.error("Error fetching services:", error);
-      } finally {
-        setLoading(false);
+    const db = getDatabase();
+    const servicesRef = ref(db, 'services');
+    onValue(servicesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert object to array with id
+        const arr = Object.entries(data).map(([id, item]) => ({ id, ...item }));
+        setServices(arr);
       }
-    };
-
-    fetchServices();
+    });
   }, []);
 
   return (
@@ -46,14 +45,12 @@ export function Services() {
           </p>
         </div>
 
-        {/* Services Grid */}
+        {/* Services Grid (Firebase) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {loading ? (
-             <div className="col-span-3 text-center text-[#efe9d6]/70">Loading services...</div>
-          ) : services.length === 0 ? (
-             <div className="col-span-3 text-center text-[#efe9d6]/70">No services found. Please add services from the admin panel.</div>
+          {services.length === 0 ? (
+            <div className="col-span-3 text-center text-[#efe9d6]/70">Loading services...</div>
           ) : (
-            services.map((service: any, index) => (
+            services.map((service, index) => (
               <div key={service.id || index} className="group relative" aria-label={service.serviceAltText}>
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 lg:rounded-3xl rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500" />
@@ -81,7 +78,7 @@ export function Services() {
                     {/* Features */}
                     <ul className="lg:space-y-3 space-y-2 mb-6">
                       {service.features && Array.isArray(service.features)
-                        ? service.features.map((feature: any, featureIndex: number) => (
+                        ? service.features.map((feature, featureIndex) => (
                           <li key={featureIndex} className="flex items-center gap-3 text-[#efe9d6]/70 text-sm">
                             <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#c9a227] to-[#0e3b2c]" />
                             {feature}

@@ -20,8 +20,8 @@ export function AboutPage() {
       />
       <VisionMission />
       <CoreValues />
-      <Leadership />
-      <Partners />
+      {/* <Leadership />
+      <Partners /> */}
       <Footer />
     </div>
   );

@@ -1,6 +1,4 @@
-import React, { useState, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { ReactNode, useState } from 'react';
 import { Users, PenTool, Briefcase, UserPlus, Menu, X, LogOut, Home, Mail, ClipboardList } from 'lucide-react';
 import logo from "../../assets/logo-light.svg";
 
@@ -11,13 +9,6 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, activePage }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const navigation = [
     { id: 'users', label: 'Users', icon: Users, href: '/admin/users' },
@@ -47,10 +38,7 @@ export function AdminLayout({ children, activePage }: AdminLayoutProps) {
           </a>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-1 sm:gap-2 text-[#efe9d6]/70 hover:text-[#c9a227] transition-colors text-xs sm:text-sm"
-          >
+          <button className="flex items-center gap-1 sm:gap-2 text-[#efe9d6]/70 hover:text-[#c9a227] transition-colors text-xs sm:text-sm">
             <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Logout</span>
           </button>

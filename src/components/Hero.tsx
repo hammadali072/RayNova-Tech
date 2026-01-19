@@ -78,7 +78,7 @@ export function Hero() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/30 via-[#d4b13f]/20 to-[#0e3b2c]/30 rounded-[3rem] blur-3xl" />
             <div className="relative">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1618758992242-2d4bc63a1be7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxBSSUyMGFydGlmaWNpYWwlMjBpbnRlbGxpZ2VuY2V8ZW58MXx8fHwxNzY0Mjk1OTI1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src="https://images.unsplash.com/photo-1674027444485-cec3da58eef4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwbmV0d29ya3xlbnwxfHx8fDE3NjQxNTAxMjl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
                 alt="Transform Your Business with Next-Gen AI Solutions, RayNova Tech delivers cutting-edge websites powered by artificial intelligence and intelligent chatbot solutions that revolutionize customer engagement."
                 className="rounded-3xl shadow-2xl border border-[#c9a227]/20 w-full"
               />

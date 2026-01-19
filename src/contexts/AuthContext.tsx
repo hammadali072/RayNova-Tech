@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from 'firebase/auth';
+import { ref, get, set } from 'firebase/database';
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: 'Admin' | 'User';
-  token?: string;
 }
 
 interface AuthContextType {
@@ -18,7 +20,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = 'raynova_user';
-const API_URL = 'http://localhost:5000/api/auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -26,15 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Restore user session from localStorage on app load
   useEffect(() => {
-    const storedUser = sessionStorage.getItem(STORAGE_KEY);
+    const storedUser = localStorage.getItem(STORAGE_KEY);
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
-        // Verify token validity with backend if needed, for now just trust local storage
         setCurrentUser(user);
       } catch (err) {
         console.error('Failed to restore user session', err);
-        sessionStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
     setIsLoading(false);
@@ -42,30 +42,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const DEFAULT_ADMIN_EMAIL = 'admin@raynova.com';
+      const DEFAULT_ADMIN_PASSWORD = 'admin123';
 
-      if (!response.ok) {
-        throw new Error('Login failed');
+      let userCredential;
+
+      // Handle default admin login
+      if (email === DEFAULT_ADMIN_EMAIL && password === DEFAULT_ADMIN_PASSWORD) {
+        const usersRef = ref(db, 'users');
+        const snapshot = await get(usersRef);
+        let adminExists = false;
+        let adminUID = null;
+
+        if (snapshot.exists()) {
+          const usersObj = snapshot.val();
+          for (const [uid, user] of Object.entries(usersObj)) {
+            if ((user as any).email === DEFAULT_ADMIN_EMAIL) {
+              adminExists = true;
+              adminUID = uid;
+              break;
+            }
+          }
+        }
+
+        if (!adminExists) {
+          // Create admin in Firebase Auth
+          try {
+            userCredential = await createUserWithEmailAndPassword(auth, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD);
+          } catch (err: any) {
+            if (err.code === 'auth/email-already-in-use') {
+              userCredential = await signInWithEmailAndPassword(auth, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD);
+            } else {
+              console.error('Failed to create admin:', err.message);
+              return false;
+            }
+          }
+          const firebaseUID = userCredential.user.uid;
+          // Add admin to DB
+          const adminData = {
+            id: firebaseUID,
+            name: 'Admin User',
+            email: DEFAULT_ADMIN_EMAIL,
+            password: DEFAULT_ADMIN_PASSWORD,
+            role: 'Admin',
+            registeredDate: new Date().toISOString()
+          };
+          await set(ref(db, `users/${firebaseUID}`), adminData);
+        } else {
+          // Admin exists, sign in
+          try {
+            userCredential = await signInWithEmailAndPassword(auth, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD);
+          } catch (err: any) {
+            console.error('Failed to login as admin:', err.message);
+            return false;
+          }
+        }
+      } else {
+        // Normal user login
+        try {
+          userCredential = await signInWithEmailAndPassword(auth, email, password);
+        } catch (err: any) {
+          console.error('Login error:', err.message);
+          return false;
+        }
       }
 
-      const data = await response.json();
-      
-      const user: User = {
-        id: data._id,
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        token: data.token
+      const firebaseUser = userCredential.user;
+
+      // Get user data from Realtime Database
+      const snapshot = await get(ref(db, `users/${firebaseUser.uid}`));
+      const userData = snapshot.val();
+
+      const userWithoutPassword: User = {
+        id: firebaseUser.uid,
+        name: userData?.name || firebaseUser.email?.split('@')[0] || '',
+        email: firebaseUser.email || '',
+        role: userData?.role || 'User'
       };
 
-      setCurrentUser(user);
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      setCurrentUser(userWithoutPassword);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userWithoutPassword));
       return true;
     } catch (err: any) {
       console.error('Login error:', err.message);
@@ -75,8 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      await signOut(auth);
       setCurrentUser(null);
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       console.error('Logout error', err);
     }

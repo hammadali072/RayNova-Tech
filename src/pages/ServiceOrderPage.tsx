@@ -33,28 +33,12 @@ export function ServiceOrderPage() {
     { value: 'custom', label: 'Custom AI Solution' }
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      const response = await fetch('http://localhost:5000/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit order');
-      }
-
-      setSubmitted(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      alert('Failed to submit order. Please try again.');
-    }
+    console.log('Order submitted:', formData);
+    setSubmitted(true);
+    // Scroll to top to show confirmation
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -66,27 +50,10 @@ export function ServiceOrderPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Check file size (max 5MB just to be safe for base64)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size exceeds 5MB limit.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({
-            ...formData,
-            file: file, // Keep original file object for UI display name
-            // Add extra fields for backend
-            fileName: file.name,
-            fileSize: file.size,
-            fileType: file.type,
-            fileData: reader.result as string
-        } as any);
-      };
-      reader.readAsDataURL(file);
+      setFormData({
+        ...formData,
+        file: e.target.files[0]
+      });
     }
   };
 

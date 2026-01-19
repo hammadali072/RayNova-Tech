@@ -16,7 +16,7 @@ export function About() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#c9a227]/20 to-[#0e3b2c]/20 rounded-3xl blur-xl" />
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1674027444485-cec3da58eef4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpZmljaWFsJTIwaW50ZWxsaWdlbmNlJTIwbmV0d29ya3xlbnwxfHx8fDE3NjQxNTAxMjl8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src="https://images.unsplash.com/photo-1568992687947-868a62a9f521?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 alt="About RayNova Tech, At RayNova Tech, we specialize in creating cutting-edge web solutions powered by artificial intelligence. Our expertise spans from building responsive, modern websites to developing custom AI chatbots that transform  how businesses interact with their customers. We combine innovative technology with practical business solutions, ensuring every project delivers measurable results and exceptional user experiences."
                 className="relative rounded-3xl shadow-2xl w-full h-auto border border-[#c9a227]/20 group-hover:scale-[1.02] transition-transform duration-700"
               />

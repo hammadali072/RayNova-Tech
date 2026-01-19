@@ -3,11 +3,12 @@ import { ArrowRight } from 'lucide-react';
 import { GradientButton } from './GradientButton';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import '../firebase';
 
 export function Blog() {
   const navigate = useNavigate();
   const [blogPosts, setBlogPosts] = useState([]);
-  const API_URL = 'http://localhost:5000/api/blogs';
 
   // Try to pick a sensible preview paragraph for each blog card
   const getFirstParagraph = (item: any) => {
@@ -31,31 +32,28 @@ export function Blog() {
   };
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-        try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            if (data) {
-                 const arr = data.map((item: any) => {
-                  let imageUrl = item.imageUrl || item.image || item.featuredImage;
-        
-                  // Extract image from contentBlocks if it exists
-                  if (!imageUrl && item.contentBlocks && Array.isArray(item.contentBlocks)) {
-                    const imageBlock = item.contentBlocks.find((block: any) => block?.type === 'image');
-                    if (imageBlock) {
-                      imageUrl = (imageBlock as any).content;
-                    }
-                  }
-        
-                  return { ...item, imageUrl, firstParagraph: getFirstParagraph(item) };
-                });
-                setBlogPosts(arr);
+    const db = getDatabase();
+    const blogsRef = ref(db, 'blogs');
+    onValue(blogsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert object to array with id and extract image from contentBlocks
+        const arr = Object.entries(data).map(([id, item]: any) => {
+          let imageUrl = item.imageUrl || item.image;
+
+          // Extract image from contentBlocks if it exists
+          if (!imageUrl && item.contentBlocks && Array.isArray(item.contentBlocks)) {
+            const imageBlock = Object.values(item.contentBlocks).find((block: any) => block?.type === 'image');
+            if (imageBlock) {
+              imageUrl = (imageBlock as any).content;
             }
-        } catch (error) {
-            console.error("Error fetching blogs:", error);
-        }
-    };
-    fetchBlogs();
+          }
+
+          return { id, ...item, imageUrl, firstParagraph: getFirstParagraph(item) };
+        });
+        setBlogPosts(arr);
+      }
+    });
   }, []);
 
   return (
@@ -86,10 +84,10 @@ export function Blog() {
 
                 <div className="relative bg-[#232323]/60 backdrop-blur-xl md:rounded-3xl rounded-xl overflow-hidden border border-[#c9a227]/10 group-hover:border-[#c9a227]/30 group-hover:shadow-[0_20px_60px_rgba(201,162,39,0.25)] transition-all duration-500 h-full flex flex-col">
                   <div className="relative h-56 overflow-hidden">
-                    {post.imageUrl ? (
+                    {post.imageUrl || post.image ? (
                       <img
-                        src={post.imageUrl}
-                        alt={post.title}
+                        src={post.imageUrl || post.image}
+                        alt={post.title + post.firstParagraph}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                     ) : (
